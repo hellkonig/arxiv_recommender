@@ -1,6 +1,7 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pickle
+import api_gen
 
 def onepage(paperurl):
     #read the data from the article page
@@ -33,7 +34,7 @@ def onepage(paperurl):
 
     return item
 
-def fetch_daily():
+def fetch_papers():
 
     # read local arxiv data
     try:
@@ -41,8 +42,11 @@ def fetch_daily():
     except:
         arxiv_data = {}
 
+    # get a url for api
+    api_url = api_gen.api_url_gen()
+
     # open a connection to a URL using urllib2
-    weburl = urlopen("https://arxiv.org/list/astro-ph/new")
+    weburl = urlopen(api_url)
 
     # get the result code and print it
     print("result code: " + str(weburl.getcode()))
@@ -53,13 +57,15 @@ def fetch_daily():
     # parser the html
     soup = BeautifulSoup(data,"html.parser")
     #print(soup.prettify().encode('ascii','ignore'))
-    for identifier in soup.find_all('span',class_='list-identifier'):
+    print(soup.find_all('id')[1:])
+    for indentifier in soup.find_all('id')[1:]:
         # open connection to the article page
-        paperurl = "https://arxiv.org"+identifier.\
-                   find_all('a',title='Abstract')[0].get('href')
+        paperurl = indentifier.get_text()
         print(paperurl)
-        item_name = identifier.find_all(
-                    'a',title='Abstract')[0].get_text()
+        
+        # extract the arxiv id
+        item_name = paperurl.split('/')[4]
+        print(item_name)
 
         # read the data from the article page
         item_content = onepage(paperurl) 
@@ -71,4 +77,4 @@ def fetch_daily():
 
 
 if __name__ == "__main__":
-    fetch_daily()
+    fetch_papers()
