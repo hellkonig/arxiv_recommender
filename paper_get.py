@@ -1,6 +1,6 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-import pickle
+import os,pickle
 import api_gen
 
 def onepage(paperurl):
@@ -36,9 +36,16 @@ def onepage(paperurl):
 
 def fetch_papers():
 
+    # make directory
+    try:
+        os.mkdir('./data/')
+        os.mkdir('./data/train/')
+    except:
+        pass
+
     # read local arxiv data
     try:
-        arxiv_data = pickle.load(open('arxiv_daily.pkl','rb'))
+        arxiv_data = pickle.load(open('./data/train/arxiv_daily.pkl','rb'))
     except:
         arxiv_data = {}
 
@@ -73,7 +80,7 @@ def fetch_papers():
         arxiv_data[item_name] = item_content
 
     # save updated arxiv data locally
-    pickle.dump(arxiv_data,open('arxiv_daily.pkl','wb'))
+    pickle.dump(arxiv_data,open('./data/train/arxiv_daily.pkl','wb'))
 
 
 if __name__ == "__main__":
