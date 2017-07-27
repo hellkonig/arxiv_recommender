@@ -50,34 +50,35 @@ def fetch_papers():
         arxiv_data = {}
 
     # get a url for api
-    api_url = api_gen.api_url_gen()
+    api_url_list = api_gen.api_url_gen()
 
-    # open a connection to a URL using urllib2
-    weburl = urlopen(api_url)
+    for api_url in api_url_list:
+        # open a connection to a URL using urllib2
+        weburl = urlopen(api_url)
 
-    # get the result code and print it
-    print("result code: " + str(weburl.getcode()))
+        # get the result code and print it
+        print("result code: " + str(weburl.getcode()))
 
-    # read the data from the URL and
-    data = weburl.read()
+        # read the data from the URL and
+        data = weburl.read()
 
-    # parser the html
-    soup = BeautifulSoup(data,"html.parser")
-    #print(soup.prettify().encode('ascii','ignore'))
-    print(soup.find_all('id')[1:])
-    for indentifier in soup.find_all('id')[1:]:
-        # open connection to the article page
-        paperurl = indentifier.get_text()
-        print(paperurl)
-        
-        # extract the arxiv id
-        item_name = paperurl.split('/')[4]
-        print(item_name)
+        # parser the html
+        soup = BeautifulSoup(data,"html.parser")
+        #print(soup.prettify().encode('ascii','ignore'))
+        print(soup.find_all('id')[1:])
+        for indentifier in soup.find_all('id')[1:]:
+            # open connection to the article page
+            paperurl = indentifier.get_text()
+            print(paperurl)
+            
+            # extract the arxiv id
+            item_name = paperurl.split('/')[4]
+            print(item_name)
 
-        # read the data from the article page
-        item_content = onepage(paperurl) 
+            # read the data from the article page
+            item_content = onepage(paperurl) 
  
-        arxiv_data[item_name] = item_content
+            arxiv_data[item_name] = item_content
 
     # save updated arxiv data locally
     pickle.dump(arxiv_data,open('./data/train/arxiv_daily.pkl','wb'))

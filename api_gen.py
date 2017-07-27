@@ -4,9 +4,15 @@ def api_url_gen():
 
     # search parameters
     search_query = 'cat:astro-ph*'
-    start = 0
-    total_results = 20
+    total_results = 30 # total number of papers fetched
+    max_results = 10  # number of papers fetched per loop
 
-    query = "search_query=%s&start=%i&max_results=%i&sortBy=lastUpdatedDate&sortOrder=descending"%(search_query,start,total_results)
+    api_url_list = []
 
-    return base_url+query
+    for i in range(total_results//max_results):
+        start = i*max_results
+        query = "search_query=%s&start=%i&max_results=%i&sortBy=lastUpdatedDate&sortOrder=descending"%(search_query,start,max_results)
+        print(base_url+query)
+        api_url_list.append(base_url+query)
+
+    return api_url_list
