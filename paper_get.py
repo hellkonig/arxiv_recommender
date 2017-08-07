@@ -65,8 +65,13 @@ def fetch_papers():
         # parser the html
         soup = BeautifulSoup(data,"html.parser")
         #print(soup.prettify().encode('ascii','ignore'))
-        print(soup.find_all('id')[1:])
-        for indentifier in soup.find_all('id')[1:]:
+   
+        # retreve abstract
+        titles = soup.find_all('title')
+        abstracts = soup.find_all('summary')
+
+        #print(soup.find_all('id')[1].get_text())
+        for idx, indentifier in enumerate(soup.find_all('id')[1:]):
             # open connection to the article page
             paperurl = indentifier.get_text()
             print(paperurl)
@@ -76,7 +81,11 @@ def fetch_papers():
             print(item_name)
 
             # read the data from the article page
-            item_content = onepage(paperurl) 
+            #item_content = onepage(paperurl) 
+            item_content = {'abstract':abstracts[idx].get_text(),
+                            'title':titles[idx].get_text()}
+
+            print(item_content['abstract'])
  
             arxiv_data[item_name] = item_content
 

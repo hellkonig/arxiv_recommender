@@ -29,7 +29,7 @@ stopword_set = set(stopwords.words('english'))
 
 train_corpus = list(read_corpus('./data/train/arxiv_daily.pkl'))
 
-model = gensim.models.doc2vec.Doc2Vec(size=50, min_count=2, iter=55)
+model = gensim.models.doc2vec.Doc2Vec(size=100, window=5, min_count=5, workers=4)
 
 model.build_vocab(train_corpus)
 
