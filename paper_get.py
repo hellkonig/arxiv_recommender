@@ -85,8 +85,6 @@ def fetch_papers():
             item_content = {'abstract':abstracts[idx].get_text(),
                             'title':titles[idx].get_text()}
 
-            print(item_content['abstract'])
- 
             arxiv_data[item_name] = item_content
 
     # save updated arxiv data locally
