@@ -22,6 +22,7 @@ train_corpus = list(read_corpus('./data/train/arxiv_daily.pkl'))
 
 model = gensim.models.doc2vec.Doc2Vec(size=20,
 	  window=8,
+          negative=4,
 	  min_count=25,
 	  dbow_words=1,
 	  iter=5,
