@@ -66,9 +66,18 @@ def fetch_papers():
         soup = BeautifulSoup(data,"html.parser")
         #print(soup.prettify().encode('ascii','ignore'))
    
-        # retreve abstract
+        # retrieve title
         titles = soup.find_all('title')
+      
+        # retrieve abstract
         abstracts = soup.find_all('summary')
+
+        # retrieve category
+        tag_primary_category = 'arxiv:primary_category'
+        primary_category = soup.find(tag_primary_category)['term']
+        category = []
+        for cate_item in soup.find_all('category'):
+            category.append(cate_item['term'])
 
         #print(soup.find_all('id')[1].get_text())
         for idx, indentifier in enumerate(soup.find_all('id')[1:]):
@@ -82,8 +91,12 @@ def fetch_papers():
 
             # read the data from the article page
             #item_content = onepage(paperurl) 
+            
             item_content = {'abstract':abstracts[idx].get_text(),
-                            'title':titles[idx].get_text()}
+                            'title':titles[idx].get_text(),
+                            'primary_category':primary_category,
+                            'category':category}
+            print(category)  
 
             arxiv_data[item_name] = item_content
 

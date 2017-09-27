@@ -4,8 +4,8 @@ def api_url_gen():
 
     # search parameters
     search_query = 'cat:astro-ph*'
-    total_results = 80000 # total number of papers fetched
-    max_results = 10  # number of papers fetched per loop
+    total_results = 10 # total number of papers fetched
+    max_results = 1  # number of papers fetched per loop
 
     api_url_list = []
 
