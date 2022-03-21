@@ -1,108 +1,39 @@
-from urllib.request import urlopen
-from bs4 import BeautifulSoup
-import os,pickle
-import api_gen
+from arxiv.utils import download
 
-def onepage(paperurl):
-    #read the data from the article page
-    paper_data = urlopen(paperurl).read()
-
-    # parser the html
-    paper_soup = BeautifulSoup(paper_data,"html.parser")
-    #print(paper_soup.findAll(attrs={"name":"citation_title"}))
-
-    # title
-    paper_title = paper_soup.findAll(
-                  attrs={"name":"citation_title"})[0]['content']
-
-    # authors
-    paper_authors = []
-    for authors in paper_soup.findAll(attrs={"name":"citation_author"}):
-        paper_authors.append(authors['content'])
-
-    # abstract
-    paper_abstract = (paper_soup.find_all('blockquote'))[0].get_text()
-
-    # subject
-    paper_subject = paper_soup.find_all(
-                    "span",class_="primary-subject")[0].get_text()
-
-    item = {'title':paper_title,
-            'authors':paper_authors,
-            'abstract':paper_abstract,
-            'subject':paper_subject}
-
-    return item
-
-def fetch_papers():
-
-    # make directory
-    try:
-        os.mkdir('./data/')
-        os.mkdir('./data/train/')
-    except:
-        pass
-
-    # read local arxiv data
-    try:
-        arxiv_data = pickle.load(open('./data/train/arxiv_daily.pkl','rb'))
-    except:
-        arxiv_data = {}
-
-    # get a url for api
-    api_url_list = api_gen.api_url_gen()
-
-    for api_url in api_url_list:
-        # open a connection to a URL using urllib2
-        weburl = urlopen(api_url)
-
-        # get the result code and print it
-        print("result code: " + str(weburl.getcode()))
-
-        # read the data from the URL and
-        data = weburl.read()
-
-        # parser the html
-        soup = BeautifulSoup(data,"html.parser")
-        #print(soup.prettify().encode('ascii','ignore'))
-   
-        # retrieve title
-        titles = soup.find_all('title')
-      
-        # retrieve abstract
-        abstracts = soup.find_all('summary')
-
-        # retrieve category
-        tag_primary_category = 'arxiv:primary_category'
-        primary_category = soup.find(tag_primary_category)['term']
-        category = []
-        for cate_item in soup.find_all('category'):
-            category.append(cate_item['term'])
-
-        #print(soup.find_all('id')[1].get_text())
-        for idx, indentifier in enumerate(soup.find_all('id')[1:]):
-            # open connection to the article page
-            paperurl = indentifier.get_text()
-            print(paperurl)
-            
-            # extract the arxiv id
-            item_name = paperurl.split('/')[4]
-            print(item_name)
-
-            # read the data from the article page
-            #item_content = onepage(paperurl) 
-            
-            item_content = {'abstract':abstracts[idx].get_text(),
-                            'title':titles[idx].get_text(),
-                            'primary_category':primary_category,
-                            'category':category}
-            print(category)  
-
-            arxiv_data[item_name] = item_content
-
-    # save updated arxiv data locally
-    pickle.dump(arxiv_data,open('./data/train/arxiv_daily.pkl','wb'))
-
+import os
+import yaml
 
 if __name__ == "__main__":
-    fetch_papers()
+    config_path = os.getcwd() + '/config.yml'
+    if os.path.exists(config_path):
+        config_file = open(config_path, "r", encoding="utf-8")
+        config_data = config_file.read()
+        config_file.close()
+        config = yaml.load(config_data, Loader=yaml.FullLoader)
+
+        search_query = config['search_query']
+        total_results = config['total_results']
+        max_results = config['max_results']
+        data_dir = config['data_dir']
+
+        print(('The query information are:'
+               'search query : %s\n'
+               'total_results : %i\n'
+               'max_results : %i\n'
+               'data_dir : %s\n')%(search_query,
+                                   total_results,
+                                   max_results,
+                                   data_dir))
+        paper_downloader = download.api(search_query=search_query,
+                                        total_results=total_results,
+                                        max_results=max_results,
+                                        data_dir=data_dir)
+    else:
+        print(('The query information are:'
+               'search query : all\n'
+               'total_results : 100\n'
+               'max_results : 1\n'
+               'data_dir : ./data/ \n'))
+        paper_downloader = download.api()
+
+    paper_downloader.fetch()

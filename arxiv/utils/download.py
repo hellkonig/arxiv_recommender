@@ -1,4 +1,3 @@
-from asyncore import write
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import csv
@@ -13,7 +12,7 @@ class api:
         default: 'all'
     total_results: int
         total number of papers fetched
-        default: 10000
+        default: 100
     max_results: int
         number of papers fetched per query
         default: 1
@@ -25,9 +24,9 @@ class api:
     def __init__(
         self, 
         search_query='all', 
-        total_results=10000, 
+        total_results=100, 
         max_results=1,
-        data_dir='./'):
+        data_dir='./data/'):
 
         self.search_query = search_query
         self.total_results = total_results
@@ -35,7 +34,7 @@ class api:
 
         # initialize the saving csv filt
         try:
-            os.mkdir('./data')
+            os.mkdir(data_dir)
         except:
             pass
         self.data_file = data_dir + 'arxiv.csv'
@@ -48,7 +47,7 @@ class api:
             writer = csv.writer(f)
             writer.writerow(header)
 
-    def api_urls(self):
+    def fetch(self):
         base_url = "http://export.arxiv.org/api/query?"
 
         length_api_url_list = self.total_results // self.max_results
@@ -64,10 +63,10 @@ class api:
                                     self.max_results)
             parsed_paper_info = self.parse(query)
 
-        # save the parsed paper info
-        with open(self.data_file, 'a', encoding='UTF8') as f:
-            writer = csv.writer(f)
-            writer.writerows(parsed_paper_info)
+            # save the parsed paper info
+            with open(self.data_file, 'a', encoding='UTF8') as f:
+                writer = csv.writer(f)
+                writer.writerows(parsed_paper_info)
 
     def parse(self, api_url):
         # open a connection to a URL using urllib2
@@ -80,7 +79,7 @@ class api:
         soup = BeautifulSoup(data,"html.parser")
    
         # retrieve title
-        titles = soup.find_all('title')
+        titles = soup.find_all('title')[1:]
       
         # retrieve abstract
         abstracts = soup.find_all('summary')
