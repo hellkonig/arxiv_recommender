@@ -1,4 +1,4 @@
-from arxiv.utils import download
+from arxiv_recommender.arxiv_paper_fetcher import download
 
 import os
 import yaml
