@@ -20,11 +20,12 @@ class LlamaEmbedding:
             text (src): input text string
 
         Returns:
-            tokens (dict): the keys are 'input_ids' and 'attention_mask',
+            tokens: <class 'transformers.tokenization_utils_base.BatchEncoding'>
+                the keys are 'input_ids' and 'attention_mask',
                 and the values are tensors.
         """
         tokenizer = LlamaTokenizer.from_pretrained(self.model_path)
-        return tokenizer(text, return_tensor='pt')
+        return tokenizer(text, return_tensors='pt')
 
     def vectorize(self, tokens):
         """
@@ -43,4 +44,4 @@ class LlamaEmbedding:
         )
         with torch.no_grad():
             outputs = llama_model(**tokens)
-        return outputs.last_hidden_stats
+        return outputs.last_hidden_state
