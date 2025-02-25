@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from ..text_vectorization.vectorize import TextVectorization
 
 
-class ArxivRecommender:
+class Recommender:
     """
     A content-based recommendation system for arXiv papers.
 
