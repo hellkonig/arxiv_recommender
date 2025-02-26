@@ -12,8 +12,8 @@ class Recommender:
     Attributes:
         vectorizer (TextVectorization): A text vectorization instance for 
             computing embeddings.
-        favorite_papers (List[Dict[str, str]]): Metadata of favorite papers 
-            in JSON format.
+        favorite_paper_embeddings (np.ndarray): Precomputed embeddings for
+            favorite papers.
     """
 
     def __init__(
@@ -30,24 +30,35 @@ class Recommender:
                 vectorization class.
             favorite_papers (List[Dict[str, str]]): A list of favorite papers, 
                 each containing "title" and "abstract".
-        """
-        self.vectorizer = vectorizer
-        self.favorite_papers = favorite_papers
-        self.favorite_paper_embeddings = self._compute_favorite_embeddings()
 
-    def _compute_favorite_embeddings(self) -> np.ndarray:
+        Raises:
+            ValueError: If no favorite papers are provided.
+        """
+        if not favorite_papers:
+            raise ValueError("At least one favorite paper must be provided.")
+
+        self.vectorizer = vectorizer
+        self.favorite_paper_embeddings = self._compute_favorite_embeddings(
+            favorite_papers
+        )
+
+    def _compute_favorite_embeddings(
+            self,
+            papers: List[Dict[str, str]]
+        ) -> np.ndarray:
         """
         Computes embeddings for the user's favorite papers.
+
+        Args:
+            papers (List[Dict[str, str]]): A list of favorite papers, each
+                containing "title" and "abstract".
 
         Returns:
             np.ndarray: An array of embeddings for the favorite papers.
         """
-        if not self.favorite_papers:
-            return np.array([])
-
         return np.array([
             self.vectorizer.process(paper["title"] + " " + paper["abstract"])
-            for paper in self.favorite_papers
+            for paper in papers
         ])
 
     def recommend_by_papers(
