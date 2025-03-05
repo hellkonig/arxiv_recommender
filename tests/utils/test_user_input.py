@@ -1,60 +1,72 @@
 import unittest
-from unittest.mock import patch, mock_open
-import json
-import os
+from unittest.mock import patch, MagicMock
+import logging
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
-
-TEST_JSON_FILE = "test_favorite_papers.json"
 
 
 class TestUserInput(unittest.TestCase):
-    """Test cases for user input handling."""
+    """Test cases for user-provided arXiv paper input."""
 
-    def setUp(self):
-        """Ensure test file is removed before each test."""
-        if os.path.exists(TEST_JSON_FILE):
-            os.remove(TEST_JSON_FILE)
-
-    def tearDown(self):
-        """Cleanup test file after each test."""
-        if os.path.exists(TEST_JSON_FILE):
-            os.remove(TEST_JSON_FILE)
-
-    @patch("builtins.input", side_effect=["1234.5678", ""])
-    @patch("utils.user_input.fetch_paper_metadata")
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("arxiv_recommender.arxiv_paper_fetcher.fetcher.ArxivFetcher.get_paper_by_id")
+    @patch("arxiv_recommender.utils.user_input.save_json")
+    @patch("builtins.input", side_effect=["1234.5678", "9876.5432", ""])
     def test_get_favorite_papers_from_user(
-        self, mock_file, mock_fetch, mock_input
+        self, mock_input, mock_save_json, mock_fetch
     ):
         """
-        Test user input for arXiv paper IDs and verify JSON storage.
+        Test user input collection and metadata retrieval.
         """
-
-        # Mock API response
-        mock_fetch.return_value = [
-            {"id": "1234.5678", "title": "Test Paper", "abstract": "Test abstract"}
+        # Mock API responses
+        mock_fetch.side_effect = [
+            {"title": "Paper 1", "abstract": "Abstract 1"},
+            {"title": "Paper 2", "abstract": "Abstract 2"},
         ]
 
-        get_favorite_papers_from_user(TEST_JSON_FILE)
+        output_file = "favorite_papers.json"
+        papers = get_favorite_papers_from_user(output_file)
 
-        # Ensure file was written
-        mock_file.assert_called_once_with(TEST_JSON_FILE, "w", encoding="utf-8")
+        # Ensure two papers were added
+        self.assertEqual(len(papers), 2)
+        self.assertEqual(papers[0]["title"], "Paper 1")
+        self.assertEqual(papers[1]["title"], "Paper 2")
 
-        # Verify file contents
-        with open(TEST_JSON_FILE, "r", encoding="utf-8") as file:
-            data = json.load(file)
-            self.assertEqual(len(data), 1)
-            self.assertEqual(data[0]["id"], "1234.5678")
-            self.assertEqual(data[0]["title"], "Test Paper")
+        # Ensure save_json was called with correct data
+        mock_save_json.assert_called_once_with(output_file, papers)
 
+        #TODO: Add logging assertions
+
+    @patch("arxiv_recommender.utils.json_handler.save_json")
     @patch("builtins.input", side_effect=[""])
-    def test_no_input_provided(self, mock_input):
+    def test_empty_input_raises_error(self, mock_input, mock_save_json):
         """
-        Test case when no IDs are provided.
-        Expect an error to be raised.
+        Test that an error is raised when no valid papers are entered.
         """
+        with self.assertRaises(ValueError) as context:
+            get_favorite_papers_from_user("dummy.json")
+
+        self.assertEqual(
+            str(context.exception), "At least one valid arXiv paper is required."
+        )
+
+        # Ensure save_json is never called
+        mock_save_json.assert_not_called()
+
+    @patch("arxiv_recommender.arxiv_paper_fetcher.fetcher.ArxivFetcher.get_paper_by_id")
+    @patch("arxiv_recommender.utils.json_handler.save_json")
+    @patch("builtins.input", side_effect=["invalid_id", ""])
+    def test_invalid_paper_id_handling(
+        self, mock_input, mock_save_json, mock_fetch
+    ):
+        """
+        Test behavior when an invalid paper ID is entered.
+        """
+        mock_fetch.return_value = None  # Simulate API returning no paper
+
         with self.assertRaises(ValueError):
-            get_favorite_papers_from_user(TEST_JSON_FILE)
+            get_favorite_papers_from_user("dummy.json")
+
+        # Ensure save_json is never called
+        mock_save_json.assert_not_called()
 
 
 if __name__ == "__main__":

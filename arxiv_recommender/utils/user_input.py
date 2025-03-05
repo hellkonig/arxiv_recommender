@@ -1,8 +1,8 @@
 import logging
 from typing import List, Dict
 
-from arxiv_paper_fetcher.fetcher import ArxivFetcher
-from utils.json_handler import save_json
+from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.utils.json_handler import save_json
 
 def get_favorite_papers_from_user(output_file: str) -> List[Dict[str, str]]:
     """
