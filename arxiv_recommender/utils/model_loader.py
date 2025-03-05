@@ -2,12 +2,16 @@ import importlib
 import logging
 from typing import Type
 
-def load_vectorization_model(model_name: str = "DistilBERTEmbedding") -> Type:
+def load_vectorization_model(
+        module_name: str = "distill_bert",
+        class_name: str = "DistilBERTEmbedding"
+    ) -> Type:
     """
     Dynamically loads a text vectorization model.
 
     Args:
-        model_name (str): Name of the model class to load.
+        module_name (str): Name of the module to load.
+        class_name (str): Name of the model class to load.
 
     Returns:
         Type: The loaded model class.
@@ -16,9 +20,11 @@ def load_vectorization_model(model_name: str = "DistilBERTEmbedding") -> Type:
         ImportError: If the model class is not found.
     """
     try:
-        module = importlib.import_module("text_vectorization.distill_bert")
-        model_class = getattr(module, model_name)
-        return model_class
+        module = importlib.import_module(f"text_vectorization.{module_name}")
+        model_class = getattr(module, class_name)
+        return model_class()
     except (ModuleNotFoundError, AttributeError) as e:
-        logging.error(f"Failed to load vectorization model '{model_name}': {e}")
-        raise ImportError(f"Model '{model_name}' not found.")
+        logging.error(
+            f"Failed to load vectorization model '{module_name}.{class_name}': {e}"
+        )
+        raise ImportError(f"Model '{module_name}.{class_name}' not found.")

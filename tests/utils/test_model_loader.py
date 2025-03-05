@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from arxiv_recommender.utils.model_loader import load_vectorizer
+from arxiv_recommender.utils.model_loader import load_vectorization_model
 
 
 class TestModelLoader(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestModelLoader(unittest.TestCase):
         mock_import.return_value = mock_module
 
         # Load default vectorizer
-        vectorizer = load_vectorizer()
+        vectorizer = load_vectorization_model()
 
         # Ensure the correct module was loaded
         mock_import.assert_called_once_with(
@@ -41,7 +41,10 @@ class TestModelLoader(unittest.TestCase):
         mock_import.return_value = mock_module
 
         # Load a custom vectorizer
-        vectorizer = load_vectorizer("text_vectorization.custom_vectorizer")
+        vectorizer = load_vectorization_model(
+            "custom_vectorizer",
+            "CustomVectorizer"
+        )
 
         # Ensure the correct module was loaded
         mock_import.assert_called_once_with(
@@ -59,7 +62,10 @@ class TestModelLoader(unittest.TestCase):
         Expect ImportError to be raised.
         """
         with self.assertRaises(ImportError):
-            load_vectorizer("text_vectorization.non_existent_model")
+            load_vectorization_model(
+                "non_existent_model",
+                "NonExistentModel"
+            )
 
 
 if __name__ == "__main__":
