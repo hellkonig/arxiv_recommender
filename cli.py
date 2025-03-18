@@ -1,68 +1,126 @@
+import os
 import argparse
-import json
 import logging
-from pathlib import Path
+from typing import Dict, Any
 
-from arxiv_recommender.utils.json_handler import load_json
-from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
+from arxiv_recommender.utils.json_handler import load_json, save_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
-from arxiv_recommender.recommendation.recommendation import Recommender
+from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
+from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.recommendation.recommendation import (
+    Recommender,
+)
 
-logger = logging.getLogger(__name__)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+# Constants
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 
 
-def parse_arguments():
+def ensure_data_directory() -> None:
+    """Ensures the 'data' directory exists before saving any files."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+
+def load_config(config_path: str) -> Dict[str, Any]:
     """
-    Parses command-line arguments.
+    Loads the configuration file.
+
+    Args:
+        config_path (str): Path to the configuration JSON file.
 
     Returns:
-        argparse.Namespace: Parsed arguments.
+        Dict[str, Any]: Parsed configuration dictionary.
+
+    Raises:
+        FileNotFoundError: If the configuration file is missing.
     """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    return load_json(config_path)
+
+
+def load_favorite_papers(config: Dict[str, Any]) -> str:
+    """
+    Loads or prompts for favorite papers.
+
+    Args:
+        config (Dict[str, Any]): Parsed configuration dictionary.
+
+    Returns:
+        str: Path to the favorite papers JSON file.
+
+    Raises:
+        ValueError: If no favorite papers file is provided.
+    """
+    favorite_papers_path = config.get("favorite_papers_path")
+
+    if not favorite_papers_path:
+        favorite_papers_path = os.path.join(DATA_DIR, "favorite_papers.json")
+        logging.info(f"Defaulting to {favorite_papers_path}")
+
+    if not os.path.exists(favorite_papers_path):
+        logging.info(
+            f"Creating empty favorite papers file: {favorite_papers_path}"
+        )
+        os.makedirs(os.path.dirname(favorite_papers_path), exist_ok=True)
+        save_json(favorite_papers_path, [])
+
+    favorite_papers_metadata = load_json(favorite_papers_path)
+    if not favorite_papers_metadata:
+        logging.info("No favorite papers provided. Prompting user input...")
+        get_favorite_papers_from_user(favorite_papers_path)
+
+    return favorite_papers_path
+
+
+def main():
+    """Main function to run the CLI application."""
+    ensure_data_directory()
+
     parser = argparse.ArgumentParser(
-        description="ArXiv Paper Recommendation System"
+        description="arXiv Paper Recommender System"
     )
     parser.add_argument(
         "--config",
-        type=Path,
-        required=True,
-        help="Path to the JSON configuration file.",
+        type=str,
+        default=CONFIG_PATH,
+        help="Path to configuration JSON file.",
     )
-    return parser.parse_args()
 
-def main():
-    """
-    Command-line interface for the arXiv recommendation system.
-    """
-    args = parse_arguments()
+    args = parser.parse_args()
 
-    # Load configuration
     try:
-        with open(args.config, "r", encoding="utf-8") as file:
-            config = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"Failed to load config file: {e}")
-        return
+        config = load_config(args.config)
 
-    favorite_papers_path = config.get("favorite_papers_path")
-    filter_field = config.get("filter_field", None)
+        # Read values from config
+        favorite_papers_path = load_favorite_papers(config)
+        vectorizer_name = config.get(
+            "vectorizer",
+            "text_vectorization.distill_bert.DistilBERTEmbedding",
+        )
+        top_k = config.get("top_k", 10)
 
-    #try:
-    #    favorite_papers = load_json(favorite_papers_path)
-    #    if not favorite_papers:
-    #        raise ValueError("Favorite papers file is empty.")
-    #except (FileNotFoundError, ValueError):
-    #    logger.info("No valid favorite papers found. Requesting user input.")
-    #    favorite_papers = get_favorite_papers_from_user(favorite_papers_path)
+        vectorizer = load_vectorization_model(vectorizer_name)
+        fetcher = ArxivFetcher()
+        recommender = Recommender(fetcher, vectorizer)
 
-    #vectorizer = load_vectorization_model()
-    #recommender = Recommender(vectorizer)
+        recommended_papers = recommender.recommend_by_papers(
+            favorite_papers_path, top_k=top_k
+        )
 
-    #recommended_papers = recommender.recommend_by_papers(
-    #    favorite_papers, filter_field=filter_field
-    #)
+        logging.info("Top recommended papers:")
+        for i, paper in enumerate(recommended_papers, 1):
+            logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
 
-    #for rank, paper in enumerate(recommended_papers, start=1):
-    #    print(f"{rank}. {paper['title']} ({paper['id']})")
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        exit(1)
 
 
 if __name__ == "__main__":
