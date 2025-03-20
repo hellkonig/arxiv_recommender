@@ -76,6 +76,7 @@ def load_favorite_papers(config: Dict[str, Any]) -> str:
         logging.info("No favorite papers provided. Prompting user input...")
         get_favorite_papers_from_user(favorite_papers_path)
 
+    logging.info(f"Favorite papers loaded:\n {favorite_papers_metadata}")
     return favorite_papers_path
 
 
@@ -102,11 +103,17 @@ def main():
         favorite_papers_path = load_favorite_papers(config)
         vectorizer_name = config.get(
             "vectorizer",
-            "text_vectorization.distill_bert.DistilBERTEmbedding",
+            {
+                "module": "distil_bert",
+                "class": "DistilBERTEmbedding"
+            }
         )
         top_k = config.get("top_k", 10)
 
-        vectorizer = load_vectorization_model(vectorizer_name)
+        vectorizer = load_vectorization_model(
+            module_name=vectorizer_name["module"],
+            class_name=vectorizer_name["class"]
+        )
         fetcher = ArxivFetcher()
         recommender = Recommender(fetcher, vectorizer)
 

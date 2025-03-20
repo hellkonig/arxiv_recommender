@@ -20,7 +20,9 @@ def load_vectorization_model(
         ImportError: If the model class is not found.
     """
     try:
-        module = importlib.import_module(f"arxiv_recommender.text_vectorization.{module_name}")
+        module = importlib.import_module(
+            f"arxiv_recommender.text_vectorization.{module_name}"
+        )
         model_class = getattr(module, class_name)
         return model_class()
     except (ModuleNotFoundError, AttributeError) as e:
