@@ -9,7 +9,7 @@ class DistilBERTEmbedding:
     Attributes:
         model_name (str): the name of the pre-trained DistilBERT model
     """
-    def __init__(self, model_name="distilbert-base-uncased"):
+    def __init__(self, model_name):
         self.model_name = model_name
 
     def tokenize(self, text):

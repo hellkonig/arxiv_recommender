@@ -9,6 +9,7 @@ from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
 from arxiv_recommender.recommendation.recommendation import (
     Recommender,
 )
+from arxiv_recommender.text_vectorization.vectorize import TextVectorization
 
 # Configure logging
 logging.basicConfig(
@@ -94,41 +95,39 @@ def main():
 
     args = parser.parse_args()
 
-    try:
-        config = load_config(args.config)
+    config = load_config(args.config)
 
-        # Read values from config
-        favorite_papers_path = config.get(
-            "favorite_papers_path",
-            "data/favorite_papers.json"
-        )
-        vectorizer_name = config.get(
-            "vectorizer",
-            {
-                "module": "distil_bert",
-                "class": "DistilBERTEmbedding"
-            }
-        )
-        top_k = config.get("top_k", 10)
+    # Read values from config
+    favorite_papers_path = config.get(
+        "favorite_papers_path",
+        "data/favorite_papers.json"
+    )
+    vectorizer_name = config.get(
+        "vectorizer",
+        {
+            "module": "distil_bert",
+            "class": "DistilBERTEmbedding",
+            "model": "./data/models/distilbert"
+        }
+    )
+    top_k = config.get("top_k", 10)
 
-        favorite_papers_metadata = load_favorite_papers(favorite_papers_path)
-        vectorizer = load_vectorization_model(
-            module_name=vectorizer_name["module"],
-            class_name=vectorizer_name["class"]
-        )
-        recommender = Recommender(vectorizer, favorite_papers_metadata)
+    favorite_papers_metadata = load_favorite_papers(favorite_papers_path)
+    vectorization_processor = load_vectorization_model(
+        module_name=vectorizer_name["module"],
+        class_name=vectorizer_name["class"],
+        model_name=vectorizer_name["model"],
+    )
+    vectorizer = TextVectorization(vectorization_processor)
+    recommender = Recommender(vectorizer, favorite_papers_metadata)
 
-        recommended_papers = recommender.recommend_by_papers(
-            favorite_papers_path, top_k=top_k
-        )
+    #recommended_papers = recommender.recommend_by_papers(
+    #    favorite_papers_path, top_k=top_k
+    #)
 
-        logging.info("Top recommended papers:")
-        for i, paper in enumerate(recommended_papers, 1):
-            logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
-
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        exit(1)
+    #logging.info("Top recommended papers:")
+    #for i, paper in enumerate(recommended_papers, 1):
+    #    logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
 
 
 if __name__ == "__main__":
