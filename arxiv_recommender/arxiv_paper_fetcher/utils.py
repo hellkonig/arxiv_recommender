@@ -18,9 +18,10 @@ def format_arxiv_query(
     """
     yesterday = datetime.now().astimezone() - timedelta(days=1)
     date_str = yesterday.strftime('%Y%m%d')
-    query = f'search_query=submittedDate:[{date_str}0000 TO {date_str}2359]&max_results={max_results}'
+    query = f'search_query=submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
     
     if category:
-        query = f'search_query=cat:{category} AND submittedDate:[{date_str}0000 TO {date_str}2359]&max_results={max_results}'
+        query = f'search_query=cat:{category}+AND+submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
     
+    query = 'search_query=submittedDate:[202503200000+TO+202503202359]'
     return query
