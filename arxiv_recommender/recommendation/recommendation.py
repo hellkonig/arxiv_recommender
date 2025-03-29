@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Dict, Optional
 from sklearn.metrics.pairwise import cosine_similarity
 
-from ..text_vectorization.vectorize import TextVectorization
+from ..text_vectorization.distil_bert import DistilBERTEmbedding
 
 
 class Recommender:
@@ -18,7 +18,7 @@ class Recommender:
 
     def __init__(
         self, 
-        vectorizer: TextVectorization, 
+        vectorizer: DistilBERTEmbedding,
         favorite_papers: List[Dict[str, str]]
     ) -> None:
         """

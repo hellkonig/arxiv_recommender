@@ -6,7 +6,6 @@ from typing import Dict, List, Any
 from arxiv_recommender.utils.json_handler import load_json, save_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
-from arxiv_recommender.text_vectorization.vectorize import TextVectorization
 from arxiv_recommender.recommendation.recommendation import (
     Recommender,
 )
@@ -123,12 +122,11 @@ def main():
         favorite_papers_path,
         fetcher
     )
-    vectorization_processor = load_vectorization_model(
+    vectorizer = load_vectorization_model(
         module_name=vectorizer_name["module"],
         class_name=vectorizer_name["class"],
         model_name=vectorizer_name["model"],
     )
-    vectorizer = TextVectorization(vectorization_processor)
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
     daily_papers = fetcher.get_daily_papers()
@@ -138,7 +136,7 @@ def main():
 
     logging.info("Top recommended papers:")
     for i, paper in enumerate(recommended_papers, 1):
-        logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
+        logging.info(f"{i}. {paper['title']} ({paper['abstract']})")
 
 
 if __name__ == "__main__":
