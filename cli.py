@@ -6,10 +6,11 @@ from typing import Dict, List, Any
 from arxiv_recommender.utils.json_handler import load_json, save_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
+from arxiv_recommender.text_vectorization.vectorize import TextVectorization
 from arxiv_recommender.recommendation.recommendation import (
     Recommender,
 )
-from arxiv_recommender.text_vectorization.vectorize import TextVectorization
+from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 # Configure logging
 logging.basicConfig(
@@ -44,12 +45,16 @@ def load_config(config_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     return load_json(config_path)
 
-def load_favorite_papers(favorite_papers_path: str) -> List[Dict[str, str]]:
+def load_favorite_papers(
+        favorite_papers_path: str,
+        fetcher: ArxivFetcher
+    ) -> List[Dict[str, str]]:
     """
     Loads or prompts for favorite papers.
 
     Args:
         favorite_papers_path (str): Path to the favorite papers JSON file.
+        fetcher (ArxivFetcher): Instance responsible for fetching metadata.
 
     Returns:
         List[Dict[str, str]]: List of favorite papers' metadata.
@@ -70,7 +75,8 @@ def load_favorite_papers(favorite_papers_path: str) -> List[Dict[str, str]]:
     if not favorite_papers_metadata:
         logging.info("No favorite papers provided. Prompting user input...")
         favorite_papers_metadata = get_favorite_papers_from_user(
-            favorite_papers_path
+            favorite_papers_path,
+            fetcher,
         )
 
     logging.info(
@@ -112,7 +118,11 @@ def main():
     )
     top_k = config.get("top_k", 10)
 
-    favorite_papers_metadata = load_favorite_papers(favorite_papers_path)
+    fetcher = ArxivFetcher()
+    favorite_papers_metadata = load_favorite_papers(
+        favorite_papers_path,
+        fetcher
+    )
     vectorization_processor = load_vectorization_model(
         module_name=vectorizer_name["module"],
         class_name=vectorizer_name["class"],
@@ -121,13 +131,14 @@ def main():
     vectorizer = TextVectorization(vectorization_processor)
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
-    #recommended_papers = recommender.recommend_by_papers(
-    #    favorite_papers_path, top_k=top_k
-    #)
+    daily_papers = fetcher.get_daily_papers()
+    recommended_papers = recommender.recommend_by_papers(
+        daily_papers, top_k=top_k
+    )
 
-    #logging.info("Top recommended papers:")
-    #for i, paper in enumerate(recommended_papers, 1):
-    #    logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
+    logging.info("Top recommended papers:")
+    for i, paper in enumerate(recommended_papers, 1):
+        logging.info(f"{i}. {paper['title']} ({paper['arxiv_id']})")
 
 
 if __name__ == "__main__":
