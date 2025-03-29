@@ -22,7 +22,7 @@ class TestModelLoader(unittest.TestCase):
 
         # Ensure the correct module was loaded
         mock_import.assert_called_once_with(
-            "text_vectorization.distill_bert"
+            "arxiv_recommender.text_vectorization.distil_bert"
         )
         # Ensure the correct class was instantiated
         mock_class.assert_called_once()
@@ -48,7 +48,7 @@ class TestModelLoader(unittest.TestCase):
 
         # Ensure the correct module was loaded
         mock_import.assert_called_once_with(
-            "text_vectorization.custom_vectorizer"
+            "arxiv_recommender.text_vectorization.custom_vectorizer"
         )
         # Ensure the correct class was instantiated
         mock_class.assert_called_once()

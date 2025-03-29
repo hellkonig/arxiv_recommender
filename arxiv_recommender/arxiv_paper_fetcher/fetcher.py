@@ -62,7 +62,7 @@ class ArxivFetcher:
             requests.RequestException: If the API request fails.
         """
         query = format_arxiv_query(category)
-        url = f"{self.base_url}search_query={query}&max_results={self.max_results}"
+        url = f"{self.base_url}{query}&max_results={self.max_results}"
         
         try:
             response = requests.get(url, timeout=10)
