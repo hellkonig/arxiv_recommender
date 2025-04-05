@@ -2,8 +2,8 @@ __pycache__
 venv
 *ipynb
 
-data/*.json
-!data/.gitkeep
+arxiv_recommender/data/*.json
+!arxiv_recommender/data/.gitkeep
 
-data/models/*
-!data/models/.gitkeep
+arxiv_recommender/data/models/*
+!arxiv_recommender/data/models/.gitkeep
