@@ -11,20 +11,11 @@ from arxiv_recommender.recommendation.recommendation import (
 )
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-# Constants
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
-
-
-def ensure_data_directory() -> None:
-    """Ensures the 'data' directory exists before saving any files."""
-    os.makedirs(DATA_DIR, exist_ok=True)
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -43,6 +34,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     return load_json(config_path)
+
 
 def load_favorite_papers(
         favorite_papers_path: str,
@@ -85,19 +77,15 @@ def load_favorite_papers(
 
 
 def main():
-    """Main function to run the CLI application."""
-    ensure_data_directory()
-
     parser = argparse.ArgumentParser(
         description="arXiv Paper Recommender System"
     )
     parser.add_argument(
         "--config",
         type=str,
-        default=CONFIG_PATH,
+        required=True,
         help="Path to configuration JSON file.",
     )
-
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -105,14 +93,14 @@ def main():
     # Read values from config
     favorite_papers_path = config.get(
         "favorite_papers_path",
-        "data/favorite_papers.json"
+        "arxiv_recommender/data/favorite_papers.json"
     )
     vectorizer_name = config.get(
         "vectorizer",
         {
             "module": "distil_bert",
             "class": "DistilBERTEmbedding",
-            "model": "./data/models/distilbert"
+            "model": "arxiv_recommender/data/models/distilbert"
         }
     )
     top_k = config.get("top_k", 10)
