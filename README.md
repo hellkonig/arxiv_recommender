@@ -18,7 +18,7 @@ arxiv_recommender/
 │   │── favorite_papers.json  # Favorite paper metadata (auto-generated)
 │── README.md                 # Project documentation
 │── requirements.txt          # Dependencies
-│── setup.py                  # Package installation script
+│── setup.py                  # Package installation script (working in progress)
 │── cli.py                    # Command-line interface
 ```
 
