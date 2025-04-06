@@ -23,5 +23,4 @@ def format_arxiv_query(
     if category:
         query = f'search_query=cat:{category}+AND+submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
     
-    query = 'search_query=submittedDate:[202503200000+TO+202503202359]'
     return query
