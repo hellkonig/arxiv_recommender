@@ -3,7 +3,7 @@ import numpy as np
 from unittest.mock import MagicMock
 
 from arxiv_recommender.recommendation.recommendation import Recommender
-from arxiv_recommender.text_vectorization.vectorize import TextVectorization
+from arxiv_recommender.text_vectorization.distil_bert import DistilBERTEmbedding
 
 
 class TestRecommender(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestRecommender(unittest.TestCase):
     def setUp(self):
         """Setup mock vectorizer and sample papers for testing."""
         # Mock vectorizer with a simple embedding function
-        self.mock_vectorizer = MagicMock(spec=TextVectorization)
+        self.mock_vectorizer = MagicMock(spec=DistilBERTEmbedding)
         self.mock_vectorizer.process.side_effect = lambda text: np.array(
             [len(text)]  # Simple mock embedding: vector length is text length
         )

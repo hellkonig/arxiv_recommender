@@ -18,7 +18,11 @@ class TestModelLoader(unittest.TestCase):
         mock_import.return_value = mock_module
 
         # Load default vectorizer
-        vectorizer = load_vectorization_model()
+        vectorizer = load_vectorization_model(
+            "distil_bert",
+            "DistilBERTEmbedding",
+            "distilbert-base-uncased"
+        )
 
         # Ensure the correct module was loaded
         mock_import.assert_called_once_with(
@@ -43,7 +47,8 @@ class TestModelLoader(unittest.TestCase):
         # Load a custom vectorizer
         vectorizer = load_vectorization_model(
             "custom_vectorizer",
-            "CustomVectorizer"
+            "CustomVectorizer",
+            "custom_vectorinzer_model_name"
         )
 
         # Ensure the correct module was loaded
@@ -63,8 +68,9 @@ class TestModelLoader(unittest.TestCase):
         """
         with self.assertRaises(ImportError):
             load_vectorization_model(
-                "non_existent_model",
-                "NonExistentModel"
+                "non_existent_module",
+                "NonExistentModel",
+                "non_existent_model"
             )
 
 
