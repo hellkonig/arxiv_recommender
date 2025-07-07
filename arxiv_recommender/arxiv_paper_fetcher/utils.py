@@ -24,3 +24,28 @@ def format_arxiv_query(
         query = f'search_query=cat:{category}+AND+submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
     
     return query
+
+def remove_control_characters(text: str) -> str:
+    """
+    Removes control characters from a string.
+    The control characters are non-printable characters that can cause issues in text processing, e.g., \n, \r, \t, etc.
+
+    >>> text = "Hello\nWorld!\tThis is a test.\r\n"
+    >>> remove_control_characters(text)
+    'Hello World! This is a test.'
+
+    Args:
+        text (str): The input string.
+
+    Returns:
+        str: The cleaned string with control characters removed.
+    """
+    text_words = []
+    for c in text:
+        if not c.isprintable() or c == ' ':
+            if text_words and text_words[-1] != ' ':
+                text_words.append(' ')
+        else:
+            text_words.append(c)
+    text = ''.join(text_words)
+    return text.strip()
