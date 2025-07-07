@@ -62,6 +62,7 @@ class ArxivFetcher:
             requests.RequestException: If the API request fails.
         """
         query = format_arxiv_query(category)
+        logging.info(f"Fetching daily papers with query: {query}")
         url = f"{self.base_url}{query}&max_results={self.max_results}"
         
         try:
