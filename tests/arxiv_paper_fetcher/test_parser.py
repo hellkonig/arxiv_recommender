@@ -1,6 +1,6 @@
 import unittest
 import xml.etree.ElementTree as ET
-from arxiv_recommender.arxiv_paper_fetcher.parser import parse_paper_info, parse_papers
+from arxiv_recommender.arxiv_paper_fetcher.parser import extract_metadata, parse_paper_info, parse_papers
 
 
 class TestParser(unittest.TestCase):
@@ -28,6 +28,14 @@ class TestParser(unittest.TestCase):
             </entry>
         </feed>
         """
+
+    def test_extract_metadata(self):
+        """Test extracting metadata from a single entry"""
+        root = ET.fromstring(self.sample_entry)
+        entry = root.find("{http://www.w3.org/2005/Atom}entry")
+        metadata = extract_metadata(entry)
+        self.assertEqual(metadata["title"], "Sample Paper")
+        self.assertEqual(metadata["abstract"], "Sample Abstract")
 
     def test_parse_paper_info(self):
         """Test extracting title and abstract from a single entry"""
