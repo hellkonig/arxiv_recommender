@@ -30,10 +30,22 @@ def remove_control_characters(text: str) -> str:
     Removes control characters from a string.
     The control characters are non-printable characters that can cause issues in text processing, e.g., \n, \r, \t, etc.
 
+    >>> text = "Hello\nWorld!\tThis is a test.\r\n"
+    >>> remove_control_characters(text)
+    'Hello World! This is a test.'
+
     Args:
         text (str): The input string.
 
     Returns:
         str: The cleaned string with control characters removed.
     """
-    return ''.join(c for c in text if c.isprintable())
+    text_words = []
+    for c in text:
+        if not c.isprintable() or c == ' ':
+            if text_words and text_words[-1] != ' ':
+                text_words.append(' ')
+        else:
+            text_words.append(c)
+    text = ''.join(text_words)
+    return text.strip()

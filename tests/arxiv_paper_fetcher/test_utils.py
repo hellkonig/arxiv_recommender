@@ -14,11 +14,16 @@ class TestUtils(unittest.TestCase):
         """Test removing control characters from a string"""
         input_text = "Hello\nWorld\x00"
         cleaned_text = remove_control_characters(input_text)
-        self.assertEqual(cleaned_text, "HelloWorld")
+        self.assertEqual(cleaned_text, "Hello World")
 
         input_text = "Hello\n World\x00"
         cleaned_text = remove_control_characters(input_text)
         self.assertEqual(cleaned_text, "Hello World")
+
+        input_text = "\t Hello\n World\x00"
+        cleaned_text = remove_control_characters(input_text)
+        self.assertEqual(cleaned_text, "Hello World")
+
 
 if __name__ == "__main__":
     unittest.main()
