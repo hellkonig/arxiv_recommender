@@ -12,12 +12,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 class ArxivFetcher:
     """A class to fetch paper information from the arXiv API."""
 
-    def __init__(self, max_results: int = 100, timeout: int = 10):
+    def __init__(self, max_results: int = 2000, timeout: int = 10):
         """
         Initializes the fetcher with configurable parameters.
 
         Args:
-            max_results (int): Maximum results per API call (default: 100).
+            max_results (int): Maximum results per API call (default: 2000).
             timeout (int): Timeout for API requests in seconds (default: 10).
         """
         self.base_url = "http://export.arxiv.org/api/query?"
