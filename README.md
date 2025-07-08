@@ -5,21 +5,24 @@
 ## Project Structure
 ```
 arxiv_recommender/
-│── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
-│── text_vectorization/       # Handles text embedding models
-│── recommendation/           # Core recommendation logic
-│── utils/                    # Utility functions
-│   │── json_handler.py       # JSON file handling
-│   │── model_loader.py       # Dynamic text vectorizer loader
-│   │── user_input.py         # Handles user-provided paper IDs
-│── tests/                    # Unit tests for each module
-│── data/                     # Stores favorite papers & config files
-│   │── config.json           # User configuration file
-│   │── favorite_papers.json  # Favorite paper metadata (auto-generated)
-│── README.md                 # Project documentation
-│── requirements.txt          # Dependencies
-│── setup.py                  # Package installation script (working in progress)
-│── cli.py                    # Command-line interface
+│── arxiv_recommender/
+|   │── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
+|   │── text_vectorization/       # Handles text embedding models
+|   │── recommendation/           # Core recommendation logic
+|   │── utils/                    # Utility functions
+|   │   │── json_handler.py       # JSON file handling
+|   │   │── model_loader.py       # Dynamic text vectorizer loader
+|   │   │── user_input.py         # Handles user-provided paper IDs
+|   │── data/                     # Stores favorite papers & config files
+|   |   │── config.json           # User configuration file
+|   |   │── favorite_papers.json  # Favorite paper metadata (auto-generated)
+    |   |── models/               # Stores local models
+|   │── bin/                      # Stores cli
+|       |── cli.py                # Command-line interface
+│── tests/                        # Unit tests for each module
+│── README.md                     # Project documentation
+│── requirements.txt              # Dependencies
+│── setup.py                      # Package installation script (working in progress)
 ```
 
 ## Getting Started
@@ -35,8 +38,12 @@ pip install -r requirements.txt
 Modify ` config.json` to set your preference:
 ```json
 {
-    "favorite_papers_path": "data/favorite_papers.json",
-    "vectorizer": "text_vectorization.distill_bert.DistilBERTEmbedding",
+    "favorite_papers_path": "arxiv_recommender/data/favorite_papers.json",
+    "vectorizer": {
+        "module": "distil_bert",
+        "class": "DistilBERTEmbedding",
+        "model": "distilbert-base-uncased"
+    },
     "top_k": 5
 }
 ```
