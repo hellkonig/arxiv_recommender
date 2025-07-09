@@ -86,6 +86,12 @@ def main():
         required=True,
         help="Path to configuration JSON file.",
     )
+    parser.add_argument(
+        "--date_of_pulling_papers",
+        type=str,
+        default=None,
+        help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to today.",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -117,7 +123,7 @@ def main():
     )
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
-    daily_papers = fetcher.get_daily_papers()
+    daily_papers = fetcher.get_daily_papers(date=args.date_of_pulling_papers)
     recommended_papers = recommender.recommend_by_papers(
         daily_papers, top_k=top_k
     )
