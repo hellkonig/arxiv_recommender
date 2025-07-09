@@ -48,11 +48,14 @@ class ArxivFetcher:
 
         return parse_paper_info(response.text)
 
-    def get_daily_papers(self, category: Optional[str] = None) -> List[Dict[str, str]]:
+    def get_daily_papers(self, date: Optional[str] = None, category: Optional[str] = None) -> List[Dict[str, str]]:
         """
-        Fetches all new papers from the last 24 hours, optionally filtered by category.
+        Fetches papers submitted to arXiv in the last 24 hours or on a specific date.
 
         Args:
+            date (Optional[str]): The date for which to fetch papers in YYYYMMDD format.
+                If provided, it should be in the format 'YYYYMMDD'.
+                If None, the function will fetch papers from the last 24 hours.
             category (Optional[str]): The arXiv category (e.g., 'cs.LG' for Machine Learning).
 
         Returns:
@@ -61,7 +64,7 @@ class ArxivFetcher:
         Raises:
             requests.RequestException: If the API request fails.
         """
-        query = format_arxiv_query(category, max_results=self.max_results)
+        query = format_arxiv_query(date, category, max_results=self.max_results)
         logging.info(f"Fetching daily papers with query: {query}")
         url = f"{self.base_url}{query}&max_results={self.max_results}"
         

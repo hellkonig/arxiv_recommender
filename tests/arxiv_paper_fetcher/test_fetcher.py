@@ -72,6 +72,20 @@ class TestArxivFetcher(unittest.TestCase):
         self.assertEqual(papers[1]["abstract"], "Abstract 2")
 
     @patch("requests.get")
+    def test_get_daily_papers_no_results(self, mock_get):
+        """Test fetching daily papers when no new papers are available."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom">
+            <!-- No entries -->
+        </feed>"""
+        mock_get.return_value = mock_response
+
+        papers = self.fetcher.get_daily_papers(category="cs.LG")
+        self.assertEqual(len(papers), 0)
+
+    @patch("requests.get")
     def test_get_daily_papers_network_error(self, mock_get):
         """Test handling of network errors when fetching daily papers."""
         mock_get.side_effect = requests.RequestException("API timeout")
