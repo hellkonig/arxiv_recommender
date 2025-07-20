@@ -43,4 +43,6 @@ def get_favorite_papers_from_user(
         raise ValueError("At least one valid arXiv paper is required.")
 
     save_json(output_file, papers)
+
+    logging.info(f"Loaded {len(papers)} favorite papers and saved them to {output_file}.")
     return papers
