@@ -1,10 +1,11 @@
 import os
 import argparse
 import logging
-from typing import Dict, List, Any
+from typing import Dict, Any
 
-from arxiv_recommender.utils.json_handler import load_json, save_json
+from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
+from arxiv_recommender.utils.paper_loader import load_favorite_papers
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
 from arxiv_recommender.recommendation.recommendation import (
     Recommender,
@@ -34,46 +35,6 @@ def load_config(config_path: str) -> Dict[str, Any]:
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     return load_json(config_path)
-
-
-def load_favorite_papers(
-        favorite_papers_path: str,
-        fetcher: ArxivFetcher
-    ) -> List[Dict[str, str]]:
-    """
-    Loads or prompts for favorite papers.
-
-    Args:
-        favorite_papers_path (str): Path to the favorite papers JSON file.
-        fetcher (ArxivFetcher): Instance responsible for fetching metadata.
-
-    Returns:
-        List[Dict[str, str]]: List of favorite papers' metadata.
-    """
-    logging.info(f"Using favorite papers file: {favorite_papers_path}")
-
-    if not os.path.exists(favorite_papers_path):
-        logging.info(
-            f"Creating empty favorite papers file: {favorite_papers_path}"
-        )
-        os.makedirs(os.path.dirname(favorite_papers_path), exist_ok=True)
-        save_json(favorite_papers_path, [])
-
-    favorite_papers_metadata: List[Dict[str, str]] = load_json(
-        favorite_papers_path
-    )
-
-    if not favorite_papers_metadata:
-        logging.info("No favorite papers provided. Prompting user input...")
-        favorite_papers_metadata = get_favorite_papers_from_user(
-            favorite_papers_path,
-            fetcher,
-        )
-
-    logging.info(
-        f"Successfully loaded {len(favorite_papers_metadata)} favorite papers."
-    )
-    return favorite_papers_metadata
 
 
 def main():
@@ -114,8 +75,14 @@ def main():
     fetcher = ArxivFetcher()
     favorite_papers_metadata = load_favorite_papers(
         favorite_papers_path,
-        fetcher
     )
+    if not favorite_papers_metadata:
+        logging.info("No favorite papers provided. Prompting user input...")
+        favorite_papers_metadata = get_favorite_papers_from_user(
+            favorite_papers_path,
+            fetcher
+        )
+
     vectorizer = load_vectorization_model(
         module_name=vectorizer_name["module"],
         class_name=vectorizer_name["class"],

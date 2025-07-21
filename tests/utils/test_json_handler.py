@@ -9,8 +9,13 @@ class TestJSONHandler(unittest.TestCase):
     
     def setUp(self):
         """Setup sample data before each test."""
-        self.sample_data = [{"title": "Sample Paper", 
-                             "abstract": "Test abstract."}]
+        self.sample_data = [
+            {
+                "title": "Sample Paper", 
+                "abstract": "Test abstract."
+            }
+        ]
+        self.sample_data_empty = []
     
     def tearDown(self):
         """Cleanup test JSON file after tests."""
@@ -32,6 +37,16 @@ class TestJSONHandler(unittest.TestCase):
         save_json(TEST_JSON_FILE, self.sample_data)
         loaded_data = load_json(TEST_JSON_FILE)
         self.assertEqual(loaded_data, self.sample_data)
+
+    def test_save_empty_json(self):
+        """Test saving an empty list to JSON file."""
+        save_json(TEST_JSON_FILE, self.sample_data_empty)
+        self.assertTrue(os.path.exists(TEST_JSON_FILE))
+
+        with open(TEST_JSON_FILE, "r", encoding="utf-8") as file:
+            saved_data = json.load(file)
+        
+        self.assertEqual(saved_data, self.sample_data_empty)
 
     def test_load_nonexistent_json(self):
         """Test handling missing file."""
