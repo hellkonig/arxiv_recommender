@@ -14,13 +14,11 @@ def extract_metadata(entry: ET.Element) -> Dict[str, str]:
     Returns:
         Dict[str, str]: A dictionary containing 'title' and 'abstract'.
     """
-    title = remove_control_characters(entry.find("{http://www.w3.org/2005/Atom}title").text.strip())
-    abstract = remove_control_characters(
-        entry.find("{http://www.w3.org/2005/Atom}summary").text.strip()
-    )
+    title_elem = entry.find("{http://www.w3.org/2005/Atom}title")
+    summary_elem = entry.find("{http://www.w3.org/2005/Atom}summary")
+    title = remove_control_characters(title_elem.text.strip()) if title_elem is not None and title_elem.text else ""
+    abstract = remove_control_characters(summary_elem.text.strip()) if summary_elem is not None and summary_elem.text else ""
 
-    if title is None or abstract is None:
-        raise ValueError("Title or abstract is missing in the entry.")
     if not title or not abstract:
         raise ValueError("Title or abstract is empty in the entry.")
     if not isinstance(title, str) or not isinstance(abstract, str):

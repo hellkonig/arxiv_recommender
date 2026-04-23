@@ -1,13 +1,13 @@
 import importlib
 import logging
-from typing import Type
+from typing import Any, Type
 
 
 def load_vectorization_model(
     module_name: str,
     class_name: str,
     model_name: str,
-) -> Type:
+) -> Any:
     """
     Dynamically loads a text vectorization model.
 

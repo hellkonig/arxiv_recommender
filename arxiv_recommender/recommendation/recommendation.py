@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Dict
+from typing import Any, Dict, List
 from sklearn.metrics.pairwise import cosine_similarity
 
 from ..text_vectorization.distil_bert import DistilBERTEmbedding
@@ -54,8 +54,8 @@ class Recommender:
         )
 
     def recommend_by_papers(
-        self, candidate_papers: List[Dict[str, str]], **kwargs
-    ) -> List[Dict[str, str]]:
+        self, candidate_papers: list[Dict[str, str]], top_k: int | None = None, **kwargs: Any
+    ) -> list[Dict[str, str]]:
         """
         Recommends papers based on the highest similarity to the user's
         favorite papers.
@@ -74,7 +74,7 @@ class Recommender:
         top_k = kwargs.get("top_k")
 
         if self.favorite_paper_embeddings.size == 0 or not candidate_papers:
-            return []
+            return []  # type: ignore[return-value]
 
         # Compute embeddings for candidate papers
         candidate_embeddings = np.array(
@@ -91,14 +91,14 @@ class Recommender:
         max_similarities = similarity_matrix.max(axis=1)
 
         # Rank candidate papers by similarity (descending order)
-        ranked_papers = sorted(
+        ranked_papers_sorted = sorted(
             zip(candidate_papers, max_similarities), key=lambda x: x[1], reverse=True
         )
 
         # Extract ranked papers with similarity scores
-        ranked_papers = [
-            {"title": paper["title"], "abstract": paper["abstract"], "score": score}
-            for paper, score in ranked_papers
+        ranked_papers: list[dict[str, Any]] = [
+            {"title": paper["title"], "abstract": paper["abstract"], "score": float(score)}
+            for paper, score in ranked_papers_sorted
         ]
 
         return ranked_papers[:top_k] if top_k else ranked_papers

@@ -53,7 +53,7 @@ def remove_control_characters(text: str) -> str:
     Returns:
         str: The cleaned string with control characters removed.
     """
-    text_words = []
+    text_words: list[str] = []
     for c in text:
         if not c.isprintable() or c == " ":
             if text_words and text_words[-1] != " ":

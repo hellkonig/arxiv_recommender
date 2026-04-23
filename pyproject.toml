@@ -34,6 +34,15 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "requests"
+ignore_missing_imports = true
+
 [tool.pre-commit]
 default_install_hook_types = ["pre-commit", "commit-msg"]
 default_stages = ["pre-commit"]
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.33.0.20260408",
+]

@@ -17,7 +17,7 @@ from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def load_config(config_path: str) -> Any:
     """
     Loads the configuration file.
 
@@ -25,17 +25,17 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config_path (str): Path to the configuration JSON file.
 
     Returns:
-        Dict[str, Any]: Parsed configuration dictionary.
+        dict[str, Any]: Parsed configuration dictionary.
 
     Raises:
         FileNotFoundError: If the configuration file is missing.
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    return load_json(config_path)
+    return load_json(config_path)  # type: ignore[return-value]
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="arXiv Paper Recommender System")
     parser.add_argument(
         "--config",
