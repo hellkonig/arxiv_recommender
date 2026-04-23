@@ -1,6 +1,10 @@
 __pycache__
 venv
+.venv
 *ipynb
+.ruff_cache
+.pytest_cache
+uv.lock
 
 arxiv_recommender/data/*.json
 !arxiv_recommender/data/.gitkeep
