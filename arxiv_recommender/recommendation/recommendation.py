@@ -17,7 +17,7 @@ class Recommender:
     """
 
     def __init__(
-        self, vectorizer: DistilBERTEmbedding, favorite_papers: List[Dict[str, str]]
+        self, vectorizer: DistilBERTEmbedding, favorite_papers: list[dict[str, str]]
     ) -> None:
         """
         Initializes the recommender with a text vectorization model and
@@ -26,7 +26,7 @@ class Recommender:
         Args:
             vectorizer (TextVectorization): An instance of the text
                 vectorization class.
-            favorite_papers (List[Dict[str, str]]): A list of favorite papers,
+            favorite_papers (list[dict[str, str]]): A list of favorite papers,
                 each containing "title" and "abstract".
 
         Raises:
@@ -38,12 +38,12 @@ class Recommender:
         self.vectorizer = vectorizer
         self.favorite_paper_embeddings = self._compute_favorite_embeddings(favorite_papers)
 
-    def _compute_favorite_embeddings(self, papers: List[Dict[str, str]]) -> np.ndarray:
+    def _compute_favorite_embeddings(self, papers: list[dict[str, str]]) -> np.ndarray:
         """
         Computes embeddings for the user's favorite papers.
 
         Args:
-            papers (List[Dict[str, str]]): A list of favorite papers, each
+            papers (list[dict[str, str]]): A list of favorite papers, each
                 containing "title" and "abstract".
 
         Returns:
@@ -54,27 +54,26 @@ class Recommender:
         )
 
     def recommend_by_papers(
-        self, candidate_papers: list[Dict[str, str]], top_k: int | None = None, **kwargs: Any
-    ) -> list[Dict[str, str]]:
+        self, candidate_papers: list[dict[str, str]], top_k: int | None = None, **kwargs: Any
+    ) -> list[dict[str, str]]:
         """
         Recommends papers based on the highest similarity to the user's
         favorite papers.
 
         Args:
-            candidate_papers (List[Dict[str, str]]): A list of candidate
+            candidate_papers (list[dict[str, str]]): A list of candidate
                 papers, each containing "title" and "abstract".
             **kwargs:
                 top_k (Optional[int]): The number of top-ranked papers to
                     return. If not provided, returns all ranked papers.
 
         Returns:
-            List[Dict[str, str]]: A ranked list of recommended papers,
+            list[dict[str, str]]: A ranked list of recommended papers,
                 sorted by highest similarity.
         """
-        top_k = kwargs.get("top_k")
 
         if self.favorite_paper_embeddings.size == 0 or not candidate_papers:
-            return []  # type: ignore[return-value]
+            return []
 
         # Compute embeddings for candidate papers
         candidate_embeddings = np.array(

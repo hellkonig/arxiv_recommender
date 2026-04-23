@@ -7,7 +7,7 @@ from arxiv_recommender.utils.json_handler import load_json, save_json
 
 def load_favorite_papers(
     favorite_papers_path: str,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """
     Loads favorite papers.
 
@@ -15,7 +15,7 @@ def load_favorite_papers(
         favorite_papers_path (str): Path to the favorite papers JSON file.
 
     Returns:
-        List[Dict[str, str]]: List of dictionaries containing paper metadata.
+        list[dict[str, str]]: List of dictionaries containing paper metadata.
     """
     logging.info(f"Using favorite papers file: {favorite_papers_path}")
 
@@ -28,7 +28,7 @@ def load_favorite_papers(
         save_json(favorite_papers_path, [])
         return []
 
-    favorite_papers_metadata: List[Dict[str, str]] = load_json(favorite_papers_path)
+    favorite_papers_metadata: list[dict[str, str]] = load_json(favorite_papers_path)
 
     logging.info(f"Successfully loaded {len(favorite_papers_metadata)} favorite papers.")
     return favorite_papers_metadata

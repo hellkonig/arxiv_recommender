@@ -26,7 +26,7 @@ class ArxivFetcher:
         self.max_results = max_results
         self.timeout = timeout
 
-    def get_paper_by_id(self, paper_id: str) -> Optional[Dict[str, str]]:
+    def get_paper_by_id(self, paper_id: str) -> Optional[dict[str, str]]:
         """
         Fetches a single paper's title and abstract using its arXiv ID.
 
@@ -51,7 +51,7 @@ class ArxivFetcher:
 
     def get_daily_papers(
         self, date: Optional[str] = None, category: Optional[str] = None
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """
         Fetches papers submitted to arXiv in the last 24 hours or on a specific date.
 
@@ -62,7 +62,7 @@ class ArxivFetcher:
             category (Optional[str]): The arXiv category (e.g., 'cs.LG' for Machine Learning).
 
         Returns:
-            List[Dict[str, str]]: A list of dictionaries, each containing title and abstract.
+            list[dict[str, str]]: A list of dictionaries, each containing title and abstract.
 
         Raises:
             requests.RequestException: If the API request fails.

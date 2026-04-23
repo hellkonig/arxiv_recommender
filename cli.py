@@ -25,7 +25,7 @@ def ensure_data_directory() -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def load_config(config_path: str) -> dict[str, Any]:
     """
     Loads the configuration file.
 
@@ -33,7 +33,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config_path (str): Path to the configuration JSON file.
 
     Returns:
-        Dict[str, Any]: Parsed configuration dictionary.
+        dict[str, Any]: Parsed configuration dictionary.
 
     Raises:
         FileNotFoundError: If the configuration file is missing.
@@ -43,7 +43,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
     return load_json(config_path)
 
 
-def load_favorite_papers(favorite_papers_path: str, fetcher: ArxivFetcher) -> List[Dict[str, str]]:
+def load_favorite_papers(favorite_papers_path: str, fetcher: ArxivFetcher) -> list[dict[str, str]]:
     """
     Loads or prompts for favorite papers.
 
@@ -52,7 +52,7 @@ def load_favorite_papers(favorite_papers_path: str, fetcher: ArxivFetcher) -> Li
         fetcher (ArxivFetcher): Instance responsible for fetching metadata.
 
     Returns:
-        List[Dict[str, str]]: List of favorite papers' metadata.
+        list[dict[str, str]]: List of favorite papers' metadata.
     """
     logging.info(f"Using favorite papers file: {favorite_papers_path}")
 
@@ -61,7 +61,7 @@ def load_favorite_papers(favorite_papers_path: str, fetcher: ArxivFetcher) -> Li
         os.makedirs(os.path.dirname(favorite_papers_path), exist_ok=True)
         save_json(favorite_papers_path, [])
 
-    favorite_papers_metadata: List[Dict[str, str]] = load_json(favorite_papers_path)
+    favorite_papers_metadata: list[dict[str, str]] = load_json(favorite_papers_path)
 
     if not favorite_papers_metadata:
         logging.info("No favorite papers provided. Prompting user input...")
