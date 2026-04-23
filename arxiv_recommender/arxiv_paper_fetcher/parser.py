@@ -14,9 +14,7 @@ def extract_metadata(entry: ET.Element) -> Dict[str, str]:
     Returns:
         Dict[str, str]: A dictionary containing 'title' and 'abstract'.
     """
-    title = remove_control_characters(
-        entry.find("{http://www.w3.org/2005/Atom}title").text.strip()
-    )
+    title = remove_control_characters(entry.find("{http://www.w3.org/2005/Atom}title").text.strip())
     abstract = remove_control_characters(
         entry.find("{http://www.w3.org/2005/Atom}summary").text.strip()
     )
@@ -29,6 +27,7 @@ def extract_metadata(entry: ET.Element) -> Dict[str, str]:
         raise TypeError("Title or abstract is not a string in the entry.")
 
     return {"title": title, "abstract": abstract}
+
 
 def parse_paper_info(xml_data: str) -> Optional[Dict[str, str]]:
     """
@@ -49,6 +48,7 @@ def parse_paper_info(xml_data: str) -> Optional[Dict[str, str]]:
     except ET.ParseError:
         return None
 
+
 def parse_papers(xml_data: str) -> List[Dict[str, str]]:
     """
     Parses multiple papers' information from the arXiv API XML response.
@@ -68,5 +68,5 @@ def parse_papers(xml_data: str) -> List[Dict[str, str]]:
             papers.append(extract_metadata(entry))
     except ET.ParseError:
         pass
-    
+
     return papers

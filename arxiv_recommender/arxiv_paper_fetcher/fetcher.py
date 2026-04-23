@@ -9,6 +9,7 @@ from .utils import format_arxiv_query
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+
 class ArxivFetcher:
     """A class to fetch paper information from the arXiv API."""
 
@@ -48,7 +49,9 @@ class ArxivFetcher:
 
         return parse_paper_info(response.text)
 
-    def get_daily_papers(self, date: Optional[str] = None, category: Optional[str] = None) -> List[Dict[str, str]]:
+    def get_daily_papers(
+        self, date: Optional[str] = None, category: Optional[str] = None
+    ) -> List[Dict[str, str]]:
         """
         Fetches papers submitted to arXiv in the last 24 hours or on a specific date.
 
@@ -67,7 +70,7 @@ class ArxivFetcher:
         query = format_arxiv_query(date, category, max_results=self.max_results)
         logging.info(f"Fetching daily papers with query: {query}")
         url = f"{self.base_url}{query}&max_results={self.max_results}"
-        
+
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
@@ -76,5 +79,7 @@ class ArxivFetcher:
             raise
 
         papers = parse_papers(response.text)
-        logging.info(f"Retrieved {len(papers)} new papers" + (f" in category {category}" if category else ""))
+        logging.info(
+            f"Retrieved {len(papers)} new papers" + (f" in category {category}" if category else "")
+        )
         return papers

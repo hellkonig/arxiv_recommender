@@ -1,18 +1,16 @@
 import unittest
-from unittest.mock import patch
 import os
 
 from arxiv_recommender.utils.json_handler import save_json
 from arxiv_recommender.utils.paper_loader import load_favorite_papers
+
 
 class TestPaperLoader(unittest.TestCase):
     """Test cases for loading favorite papers."""
 
     def setUp(self):
         """Setup sample data before each test."""
-        self.sample_data = [
-            {"title": "Sample Paper", "abstract": "Test abstract."}
-        ]
+        self.sample_data = [{"title": "Sample Paper", "abstract": "Test abstract."}]
         save_json("test_favorite_papers.json", self.sample_data)
 
     def tearDown(self):
@@ -29,7 +27,7 @@ class TestPaperLoader(unittest.TestCase):
 
     def test_load_favorite_papers_file_not_found(self):
         """Test loading favorite papers when the file does not exist."""
-        with self.assertLogs(level='INFO') as log:
+        with self.assertLogs(level="INFO") as log:
             result = load_favorite_papers("non_existent.json")
             self.assertEqual(result, [])
             self.assertIn("Creating empty favorite papers file", log.output[1])

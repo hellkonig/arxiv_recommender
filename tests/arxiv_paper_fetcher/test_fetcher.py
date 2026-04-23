@@ -5,7 +5,6 @@ from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 
 class TestArxivFetcher(unittest.TestCase):
-
     def setUp(self):
         """Initialize the ArxivFetcher instance for tests."""
         self.fetcher = ArxivFetcher(max_results=5)
@@ -44,7 +43,7 @@ class TestArxivFetcher(unittest.TestCase):
     def test_get_paper_by_id_network_error(self, mock_get):
         """Test handling of network errors when fetching a paper."""
         mock_get.side_effect = requests.RequestException("Network error")
-        
+
         with self.assertRaises(requests.RequestException):
             self.fetcher.get_paper_by_id("1234.56789")
 

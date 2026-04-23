@@ -12,9 +12,7 @@ from arxiv_recommender.recommendation.recommendation import (
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Constants
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,10 +42,8 @@ def load_config(config_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     return load_json(config_path)
 
-def load_favorite_papers(
-        favorite_papers_path: str,
-        fetcher: ArxivFetcher
-    ) -> List[Dict[str, str]]:
+
+def load_favorite_papers(favorite_papers_path: str, fetcher: ArxivFetcher) -> List[Dict[str, str]]:
     """
     Loads or prompts for favorite papers.
 
@@ -61,15 +57,11 @@ def load_favorite_papers(
     logging.info(f"Using favorite papers file: {favorite_papers_path}")
 
     if not os.path.exists(favorite_papers_path):
-        logging.info(
-            f"Creating empty favorite papers file: {favorite_papers_path}"
-        )
+        logging.info(f"Creating empty favorite papers file: {favorite_papers_path}")
         os.makedirs(os.path.dirname(favorite_papers_path), exist_ok=True)
         save_json(favorite_papers_path, [])
 
-    favorite_papers_metadata: List[Dict[str, str]] = load_json(
-        favorite_papers_path
-    )
+    favorite_papers_metadata: List[Dict[str, str]] = load_json(favorite_papers_path)
 
     if not favorite_papers_metadata:
         logging.info("No favorite papers provided. Prompting user input...")
@@ -78,9 +70,7 @@ def load_favorite_papers(
             fetcher,
         )
 
-    logging.info(
-        f"Successfully loaded {len(favorite_papers_metadata)} favorite papers."
-    )
+    logging.info(f"Successfully loaded {len(favorite_papers_metadata)} favorite papers.")
     return favorite_papers_metadata
 
 
@@ -88,9 +78,7 @@ def main():
     """Main function to run the CLI application."""
     ensure_data_directory()
 
-    parser = argparse.ArgumentParser(
-        description="arXiv Paper Recommender System"
-    )
+    parser = argparse.ArgumentParser(description="arXiv Paper Recommender System")
     parser.add_argument(
         "--config",
         type=str,
@@ -103,25 +91,19 @@ def main():
     config = load_config(args.config)
 
     # Read values from config
-    favorite_papers_path = config.get(
-        "favorite_papers_path",
-        "data/favorite_papers.json"
-    )
+    favorite_papers_path = config.get("favorite_papers_path", "data/favorite_papers.json")
     vectorizer_name = config.get(
         "vectorizer",
         {
             "module": "distil_bert",
             "class": "DistilBERTEmbedding",
-            "model": "./data/models/distilbert"
-        }
+            "model": "./data/models/distilbert",
+        },
     )
     top_k = config.get("top_k", 10)
 
     fetcher = ArxivFetcher()
-    favorite_papers_metadata = load_favorite_papers(
-        favorite_papers_path,
-        fetcher
-    )
+    favorite_papers_metadata = load_favorite_papers(favorite_papers_path, fetcher)
     vectorizer = load_vectorization_model(
         module_name=vectorizer_name["module"],
         class_name=vectorizer_name["class"],
@@ -130,9 +112,7 @@ def main():
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
     daily_papers = fetcher.get_daily_papers()
-    recommended_papers = recommender.recommend_by_papers(
-        daily_papers, top_k=top_k
-    )
+    recommended_papers = recommender.recommend_by_papers(daily_papers, top_k=top_k)
 
     logging.info("Top recommended papers:")
     for i, paper in enumerate(recommended_papers, 1):

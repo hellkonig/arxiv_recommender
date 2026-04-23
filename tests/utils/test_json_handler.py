@@ -5,18 +5,13 @@ from arxiv_recommender.utils.json_handler import load_json, save_json
 
 TEST_JSON_FILE = "test_favorite_papers.json"
 
+
 class TestJSONHandler(unittest.TestCase):
-    
     def setUp(self):
         """Setup sample data before each test."""
-        self.sample_data = [
-            {
-                "title": "Sample Paper", 
-                "abstract": "Test abstract."
-            }
-        ]
+        self.sample_data = [{"title": "Sample Paper", "abstract": "Test abstract."}]
         self.sample_data_empty = []
-    
+
     def tearDown(self):
         """Cleanup test JSON file after tests."""
         if os.path.exists(TEST_JSON_FILE):
@@ -29,7 +24,7 @@ class TestJSONHandler(unittest.TestCase):
 
         with open(TEST_JSON_FILE, "r", encoding="utf-8") as file:
             saved_data = json.load(file)
-        
+
         self.assertEqual(saved_data, self.sample_data)
 
     def test_load_json(self):
@@ -45,7 +40,7 @@ class TestJSONHandler(unittest.TestCase):
 
         with open(TEST_JSON_FILE, "r", encoding="utf-8") as file:
             saved_data = json.load(file)
-        
+
         self.assertEqual(saved_data, self.sample_data_empty)
 
     def test_load_nonexistent_json(self):
@@ -60,6 +55,7 @@ class TestJSONHandler(unittest.TestCase):
 
         with self.assertRaises(json.JSONDecodeError):
             load_json(TEST_JSON_FILE)
+
 
 if __name__ == "__main__":
     unittest.main()

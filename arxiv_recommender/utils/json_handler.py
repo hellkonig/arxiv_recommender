@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Any
 
+
 def load_json(file_path: str) -> Any:
     """
     Loads a JSON file.
@@ -22,6 +23,7 @@ def load_json(file_path: str) -> Any:
     except (IOError, json.JSONDecodeError) as e:
         logging.error(f"Failed to load JSON from {file_path}: {e}")
         raise
+
 
 def save_json(file_path: str, data: Any) -> None:
     """

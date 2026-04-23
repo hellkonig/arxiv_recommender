@@ -6,10 +6,11 @@ from arxiv_recommender.text_vectorization.distil_bert import DistilBERTEmbedding
 
 
 class TestDistilBERTEmbedding(unittest.TestCase):
-
     @patch("arxiv_recommender.text_vectorization.distil_bert.DistilBertModel.from_pretrained")
     @patch("arxiv_recommender.text_vectorization.distil_bert.DistilBertTokenizer.from_pretrained")
-    def test_process_returns_expected_shape(self, mock_tokenizer_from_pretrained, mock_model_from_pretrained):
+    def test_process_returns_expected_shape(
+        self, mock_tokenizer_from_pretrained, mock_model_from_pretrained
+    ):
         # Mock the tokenizer
         mock_tokenizer = MagicMock()
         mock_tokenizer.return_value = {
@@ -35,6 +36,7 @@ class TestDistilBERTEmbedding(unittest.TestCase):
         # Ensure model/tokenizer were called correctly
         mock_tokenizer_from_pretrained.assert_called_once()
         mock_model_from_pretrained.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

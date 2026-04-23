@@ -14,9 +14,7 @@ from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -38,9 +36,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="arXiv Paper Recommender System"
-    )
+    parser = argparse.ArgumentParser(description="arXiv Paper Recommender System")
     parser.add_argument(
         "--config",
         type=str,
@@ -59,16 +55,15 @@ def main():
 
     # Read values from config
     favorite_papers_path = config.get(
-        "favorite_papers_path",
-        "arxiv_recommender/data/favorite_papers.json"
+        "favorite_papers_path", "arxiv_recommender/data/favorite_papers.json"
     )
     vectorizer_name = config.get(
         "vectorizer",
         {
             "module": "distil_bert",
             "class": "DistilBERTEmbedding",
-            "model": "arxiv_recommender/data/models/distilbert"
-        }
+            "model": "arxiv_recommender/data/models/distilbert",
+        },
     )
     top_k = config.get("top_k", 10)
 
@@ -78,10 +73,7 @@ def main():
     )
     if not favorite_papers_metadata:
         logging.info("No favorite papers provided. Prompting user input...")
-        favorite_papers_metadata = get_favorite_papers_from_user(
-            favorite_papers_path,
-            fetcher
-        )
+        favorite_papers_metadata = get_favorite_papers_from_user(favorite_papers_path, fetcher)
 
     vectorizer = load_vectorization_model(
         module_name=vectorizer_name["module"],
@@ -91,9 +83,7 @@ def main():
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
     daily_papers = fetcher.get_daily_papers(date=args.date_of_pulling_papers)
-    recommended_papers = recommender.recommend_by_papers(
-        daily_papers, top_k=top_k
-    )
+    recommended_papers = recommender.recommend_by_papers(daily_papers, top_k=top_k)
 
     logging.info("Top recommended papers:")
     for i, paper in enumerate(recommended_papers, 1):
