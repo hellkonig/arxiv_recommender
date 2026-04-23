@@ -1,6 +1,6 @@
 import importlib
 import logging
-from typing import Any, Type
+from typing import Any
 
 
 def load_vectorization_model(

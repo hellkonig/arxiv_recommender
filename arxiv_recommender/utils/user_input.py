@@ -1,5 +1,4 @@
 import logging
-from typing import List, Dict
 
 from arxiv_recommender.utils.json_handler import save_json
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher

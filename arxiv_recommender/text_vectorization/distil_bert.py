@@ -1,6 +1,5 @@
 import torch
 from transformers import DistilBertTokenizer, DistilBertModel
-from typing import List
 
 
 class DistilBERTEmbedding:

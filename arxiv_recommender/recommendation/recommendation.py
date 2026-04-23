@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Any, Dict, List
+from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
 from ..text_vectorization.distil_bert import DistilBERTEmbedding

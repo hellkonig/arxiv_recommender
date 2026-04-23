@@ -1,6 +1,6 @@
 import requests
 import logging
-from typing import Optional, List, Dict
+from typing import Optional
 
 from .parser import parse_paper_info, parse_papers
 from .utils import format_arxiv_query

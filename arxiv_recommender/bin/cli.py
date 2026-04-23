@@ -1,7 +1,7 @@
 import os
 import argparse
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
