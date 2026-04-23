@@ -7,7 +7,7 @@ name = "arxiv-recommender"
 version = "0.1.0"
 description = "Content-based arXiv paper recommender system using configurable embedding models"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.20",
     "torch>=2.0",
@@ -28,7 +28,7 @@ testpaths = ["tests"]
 line-length = 100
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
