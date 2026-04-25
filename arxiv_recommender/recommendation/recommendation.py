@@ -54,7 +54,7 @@ class Recommender:
         )
 
     def recommend_by_papers(
-        self, candidate_papers: list[dict[str, str]], top_k: int | None = None, **kwargs: Any
+        self, candidate_papers: list[dict[str, str]], top_k: int | None = None
     ) -> list[dict[str, str]]:
         """
         Recommends papers based on the highest similarity to the user's
@@ -63,9 +63,8 @@ class Recommender:
         Args:
             candidate_papers (list[dict[str, str]]): A list of candidate
                 papers, each containing "title" and "abstract".
-            **kwargs:
-                top_k (Optional[int]): The number of top-ranked papers to
-                    return. If not provided, returns all ranked papers.
+            top_k (Optional[int]): The number of top-ranked papers to
+                return. If not provided, returns all ranked papers.
 
         Returns:
             list[dict[str, str]]: A ranked list of recommended papers,

@@ -17,7 +17,7 @@ from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def load_config(config_path: str) -> Any:
+def load_config(config_path: str) -> dict[str, Any]:
     """
     Loads the configuration file.
 
@@ -29,10 +29,14 @@ def load_config(config_path: str) -> Any:
 
     Raises:
         FileNotFoundError: If the configuration file is missing.
+        ValueError: If the configuration is not a valid dictionary.
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    return load_json(config_path)
+    config = load_json(config_path)
+    if not isinstance(config, dict):
+        raise ValueError(f"Configuration at {config_path} must be a JSON object (dictionary), got {type(config).__name__}")
+    return config
 
 
 def main() -> None:
