@@ -3,10 +3,8 @@ from typing import Optional
 
 
 def format_arxiv_query(
-        date: Optional[str] = None,
-        category: Optional[str] = None,
-        max_results: int = 50
-    ) -> str:
+    date: Optional[str] = None, category: Optional[str] = None, max_results: int = 50
+) -> str:
     """
     Formats the search query for arXiv API to fetch papers from the last 24 hours.
 
@@ -23,19 +21,22 @@ def format_arxiv_query(
     if date:
         # If a specific date is provided, use it to format the query
         try:
-            date_obj = datetime.strptime(date, '%Y%m%d')
+            date_obj = datetime.strptime(date, "%Y%m%d")
         except ValueError:
             raise ValueError("Date must be in YYYYMMDD format.")
-        date_str = date_obj.strftime('%Y%m%d')
+        date_str = date_obj.strftime("%Y%m%d")
     else:
         yesterday = datetime.now().astimezone() - timedelta(days=1)
-        date_str = yesterday.strftime('%Y%m%d')
-    query = f'search_query=submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
-    
+        date_str = yesterday.strftime("%Y%m%d")
+    query = (
+        f"search_query=submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}"
+    )
+
     if category:
-        query = f'search_query=cat:{category}+AND+submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}'
-    
+        query = f"search_query=cat:{category}+AND+submittedDate:[{date_str}0000+TO+{date_str}2359]&max_results={max_results}"
+
     return query
+
 
 def remove_control_characters(text: str) -> str:
     """
@@ -52,12 +53,12 @@ def remove_control_characters(text: str) -> str:
     Returns:
         str: The cleaned string with control characters removed.
     """
-    text_words = []
+    text_words: list[str] = []
     for c in text:
-        if not c.isprintable() or c == ' ':
-            if text_words and text_words[-1] != ' ':
-                text_words.append(' ')
+        if not c.isprintable() or c == " ":
+            if text_words and text_words[-1] != " ":
+                text_words.append(" ")
         else:
             text_words.append(c)
-    text = ''.join(text_words)
+    text = "".join(text_words)
     return text.strip()

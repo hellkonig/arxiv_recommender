@@ -1,10 +1,10 @@
 import xml.etree.ElementTree as ET
-from typing import Optional, Dict, List
+from typing import Optional
 
 from arxiv_recommender.arxiv_paper_fetcher.utils import remove_control_characters
 
 
-def extract_metadata(entry: ET.Element) -> Dict[str, str]:
+def extract_metadata(entry: ET.Element) -> dict[str, str]:
     """
     Extracts paper's meta data from a single XML entry.
 
@@ -12,17 +12,21 @@ def extract_metadata(entry: ET.Element) -> Dict[str, str]:
         entry (ET.Element): An XML element representing a paper entry.
 
     Returns:
-        Dict[str, str]: A dictionary containing 'title' and 'abstract'.
+        dict[str, str]: A dictionary containing 'title' and 'abstract'.
     """
-    title = remove_control_characters(
-        entry.find("{http://www.w3.org/2005/Atom}title").text.strip()
+    title_elem = entry.find("{http://www.w3.org/2005/Atom}title")
+    summary_elem = entry.find("{http://www.w3.org/2005/Atom}summary")
+    title = (
+        remove_control_characters(title_elem.text.strip())
+        if title_elem is not None and title_elem.text
+        else ""
     )
-    abstract = remove_control_characters(
-        entry.find("{http://www.w3.org/2005/Atom}summary").text.strip()
+    abstract = (
+        remove_control_characters(summary_elem.text.strip())
+        if summary_elem is not None and summary_elem.text
+        else ""
     )
 
-    if title is None or abstract is None:
-        raise ValueError("Title or abstract is missing in the entry.")
     if not title or not abstract:
         raise ValueError("Title or abstract is empty in the entry.")
     if not isinstance(title, str) or not isinstance(abstract, str):
@@ -30,7 +34,8 @@ def extract_metadata(entry: ET.Element) -> Dict[str, str]:
 
     return {"title": title, "abstract": abstract}
 
-def parse_paper_info(xml_data: str) -> Optional[Dict[str, str]]:
+
+def parse_paper_info(xml_data: str) -> Optional[dict[str, str]]:
     """
     Parses a single paper's information (title and abstract) from the arXiv API XML response.
 
@@ -38,7 +43,7 @@ def parse_paper_info(xml_data: str) -> Optional[Dict[str, str]]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        Optional[Dict[str, str]]: A dictionary containing 'title' and 'abstract' if successful, else None.
+        Optional[dict[str, str]]: A dictionary containing 'title' and 'abstract' if successful, else None.
     """
     try:
         root = ET.fromstring(xml_data)
@@ -49,7 +54,8 @@ def parse_paper_info(xml_data: str) -> Optional[Dict[str, str]]:
     except ET.ParseError:
         return None
 
-def parse_papers(xml_data: str) -> List[Dict[str, str]]:
+
+def parse_papers(xml_data: str) -> list[dict[str, str]]:
     """
     Parses multiple papers' information from the arXiv API XML response.
 
@@ -57,7 +63,7 @@ def parse_papers(xml_data: str) -> List[Dict[str, str]]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        List[Dict[str, str]]: A list of dictionaries, each containing 'title' and 'abstract'.
+        list[dict[str, str]]: A list of dictionaries, each containing 'title' and 'abstract'.
     """
     papers = []
     try:
@@ -68,5 +74,5 @@ def parse_papers(xml_data: str) -> List[Dict[str, str]]:
             papers.append(extract_metadata(entry))
     except ET.ParseError:
         pass
-    
+
     return papers

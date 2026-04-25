@@ -1,10 +1,13 @@
 import unittest
 import xml.etree.ElementTree as ET
-from arxiv_recommender.arxiv_paper_fetcher.parser import extract_metadata, parse_paper_info, parse_papers
+from arxiv_recommender.arxiv_paper_fetcher.parser import (
+    extract_metadata,
+    parse_paper_info,
+    parse_papers,
+)
 
 
 class TestParser(unittest.TestCase):
-
     def setUp(self):
         """Set up test XML responses"""
         self.sample_entry = """

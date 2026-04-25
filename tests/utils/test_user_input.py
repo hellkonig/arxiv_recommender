@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import logging
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
 
 
@@ -9,9 +8,7 @@ class TestUserInput(unittest.TestCase):
 
     @patch("arxiv_recommender.utils.user_input.save_json")
     @patch("builtins.input", side_effect=["1234.5678", "9876.5432", ""])
-    def test_get_favorite_papers_from_user(
-        self, mock_input, mock_save_json 
-    ):
+    def test_get_favorite_papers_from_user(self, mock_input, mock_save_json):
         """
         Test user input collection and metadata retrieval.
         """
@@ -33,7 +30,7 @@ class TestUserInput(unittest.TestCase):
         # Ensure save_json was called with correct data
         mock_save_json.assert_called_once_with(output_file, papers)
 
-        #TODO: Add logging assertions
+        # TODO: Add logging assertions
 
     @patch("arxiv_recommender.utils.json_handler.save_json")
     @patch("builtins.input", side_effect=[""])
@@ -48,18 +45,14 @@ class TestUserInput(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_favorite_papers_from_user("dummy.json", mock_fetcher)
 
-        self.assertEqual(
-            str(context.exception), "At least one valid arXiv paper is required."
-        )
+        self.assertEqual(str(context.exception), "At least one valid arXiv paper is required.")
 
         # Ensure save_json is never called
         mock_save_json.assert_not_called()
 
     @patch("arxiv_recommender.utils.json_handler.save_json")
     @patch("builtins.input", side_effect=["invalid_id", ""])
-    def test_invalid_paper_id_handling(
-        self, mock_input, mock_save_json
-    ):
+    def test_invalid_paper_id_handling(self, mock_input, mock_save_json):
         """
         Test behavior when an invalid paper ID is entered.
         """

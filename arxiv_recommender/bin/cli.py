@@ -1,7 +1,7 @@
 import os
 import argparse
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
@@ -14,12 +14,10 @@ from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def load_config(config_path: str) -> dict[str, Any]:
     """
     Loads the configuration file.
 
@@ -27,20 +25,24 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config_path (str): Path to the configuration JSON file.
 
     Returns:
-        Dict[str, Any]: Parsed configuration dictionary.
+        dict[str, Any]: Parsed configuration dictionary.
 
     Raises:
         FileNotFoundError: If the configuration file is missing.
+        ValueError: If the configuration is not a valid dictionary.
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    return load_json(config_path)
+    config = load_json(config_path)
+    if not isinstance(config, dict):
+        raise ValueError(
+            f"Configuration at {config_path} must be a JSON object (dictionary), got {type(config).__name__}"
+        )
+    return config
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="arXiv Paper Recommender System"
-    )
+def main() -> None:
+    parser = argparse.ArgumentParser(description="arXiv Paper Recommender System")
     parser.add_argument(
         "--config",
         type=str,
@@ -59,16 +61,15 @@ def main():
 
     # Read values from config
     favorite_papers_path = config.get(
-        "favorite_papers_path",
-        "arxiv_recommender/data/favorite_papers.json"
+        "favorite_papers_path", "arxiv_recommender/data/favorite_papers.json"
     )
     vectorizer_name = config.get(
         "vectorizer",
         {
             "module": "distil_bert",
             "class": "DistilBERTEmbedding",
-            "model": "arxiv_recommender/data/models/distilbert"
-        }
+            "model": "arxiv_recommender/data/models/distilbert",
+        },
     )
     top_k = config.get("top_k", 10)
 
@@ -78,10 +79,7 @@ def main():
     )
     if not favorite_papers_metadata:
         logging.info("No favorite papers provided. Prompting user input...")
-        favorite_papers_metadata = get_favorite_papers_from_user(
-            favorite_papers_path,
-            fetcher
-        )
+        favorite_papers_metadata = get_favorite_papers_from_user(favorite_papers_path, fetcher)
 
     vectorizer = load_vectorization_model(
         module_name=vectorizer_name["module"],
@@ -91,9 +89,7 @@ def main():
     recommender = Recommender(vectorizer, favorite_papers_metadata)
 
     daily_papers = fetcher.get_daily_papers(date=args.date_of_pulling_papers)
-    recommended_papers = recommender.recommend_by_papers(
-        daily_papers, top_k=top_k
-    )
+    recommended_papers = recommender.recommend_by_papers(daily_papers, top_k=top_k)
 
     logging.info("Top recommended papers:")
     for i, paper in enumerate(recommended_papers, 1):

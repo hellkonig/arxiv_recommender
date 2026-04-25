@@ -1,6 +1,5 @@
 import torch
 from transformers import DistilBertTokenizer, DistilBertModel
-from typing import List
 
 
 class DistilBERTEmbedding:
@@ -42,7 +41,7 @@ class DistilBERTEmbedding:
         tokenized_chunks = self.tokenize(text)
         return self.vectorize(tokenized_chunks)
 
-    def tokenize(self, text: str) -> List[torch.Tensor]:
+    def tokenize(self, text: str) -> list[torch.Tensor]:
         """
         Tokenizes input text into chunks that fit within DistilBERT's limits.
 
@@ -50,7 +49,7 @@ class DistilBERTEmbedding:
             text (str): Input text string.
 
         Returns:
-            List[torch.Tensor]: List of tokenized chunks.
+            list[torch.Tensor]: List of tokenized chunks.
         """
         tokens = self.tokenizer(
             text,
@@ -61,13 +60,13 @@ class DistilBERTEmbedding:
         )
         return [tokens["input_ids"], tokens["attention_mask"]]
 
-    def vectorize(self, tokenized_chunks: List[torch.Tensor]) -> torch.Tensor:
+    def vectorize(self, tokenized_chunks: list[torch.Tensor]) -> torch.Tensor:
         """
         Get the embedding vectors for the input splitted tokens
         and aggregating the chunk embeddings.
 
         Args:
-            List[torch.Tensor]: List of tokenized chunks.
+            list[torch.Tensor]: List of tokenized chunks.
 
         Returns:
             torch.Tensor: The aggregated text embedding.
