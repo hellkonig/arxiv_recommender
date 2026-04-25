@@ -32,7 +32,7 @@ def load_config(config_path: str) -> Any:
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    return load_json(config_path)  # type: ignore[return-value]
+    return load_json(config_path)
 
 
 def main() -> None:

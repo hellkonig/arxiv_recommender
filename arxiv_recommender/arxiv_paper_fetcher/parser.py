@@ -1,3 +1,4 @@
+import logging
 import xml.etree.ElementTree as ET
 from typing import Optional
 
@@ -28,6 +29,7 @@ def extract_metadata(entry: ET.Element) -> dict[str, str]:
     )
 
     if not title or not abstract:
+        logging.warning("Empty title or abstract found in entry, skipping")
         raise ValueError("Title or abstract is empty in the entry.")
     if not isinstance(title, str) or not isinstance(abstract, str):
         raise TypeError("Title or abstract is not a string in the entry.")
