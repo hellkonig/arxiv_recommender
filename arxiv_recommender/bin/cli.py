@@ -35,7 +35,9 @@ def load_config(config_path: str) -> dict[str, Any]:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     config = load_json(config_path)
     if not isinstance(config, dict):
-        raise ValueError(f"Configuration at {config_path} must be a JSON object (dictionary), got {type(config).__name__}")
+        raise ValueError(
+            f"Configuration at {config_path} must be a JSON object (dictionary), got {type(config).__name__}"
+        )
     return config
 
 
