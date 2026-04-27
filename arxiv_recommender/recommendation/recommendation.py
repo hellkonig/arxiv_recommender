@@ -2,6 +2,7 @@ import numpy as np
 from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
+from arxiv_recommender.schemas import Paper
 from ..text_vectorization.distil_bert import DistilBERTEmbedding
 
 
@@ -17,7 +18,7 @@ class Recommender:
     """
 
     def __init__(
-        self, vectorizer: DistilBERTEmbedding, favorite_papers: list[dict[str, str]]
+        self, vectorizer: DistilBERTEmbedding, favorite_papers: list[Paper]
     ) -> None:
         """
         Initializes the recommender with a text vectorization model and
@@ -26,7 +27,7 @@ class Recommender:
         Args:
             vectorizer (TextVectorization): An instance of the text
                 vectorization class.
-            favorite_papers (list[dict[str, str]]): A list of favorite papers,
+            favorite_papers (list[Paper]): A list of favorite papers,
                 each containing "title" and "abstract".
 
         Raises:
@@ -38,36 +39,36 @@ class Recommender:
         self.vectorizer = vectorizer
         self.favorite_paper_embeddings = self._compute_favorite_embeddings(favorite_papers)
 
-    def _compute_favorite_embeddings(self, papers: list[dict[str, str]]) -> np.ndarray:
+    def _compute_favorite_embeddings(self, papers: list[Paper]) -> np.ndarray:
         """
         Computes embeddings for the user's favorite papers.
 
         Args:
-            papers (list[dict[str, str]]): A list of favorite papers, each
+            papers (list[Paper]): A list of favorite papers, each
                 containing "title" and "abstract".
 
         Returns:
             np.ndarray: An array of embeddings for the favorite papers.
         """
         return np.array(
-            [self.vectorizer.process(paper["title"] + " " + paper["abstract"]) for paper in papers]
+            [self.vectorizer.process(paper.title + " " + paper.abstract) for paper in papers]
         )
 
     def recommend_by_papers(
-        self, candidate_papers: list[dict[str, str]], top_k: int | None = None
-    ) -> list[dict[str, str]]:
+        self, candidate_papers: list[Paper], top_k: int | None = None
+    ) -> list[dict[str, Any]]:
         """
         Recommends papers based on the highest similarity to the user's
         favorite papers.
 
         Args:
-            candidate_papers (list[dict[str, str]]): A list of candidate
+            candidate_papers (list[Paper]): A list of candidate
                 papers, each containing "title" and "abstract".
             top_k (Optional[int]): The number of top-ranked papers to
                 return. If not provided, returns all ranked papers.
 
         Returns:
-            list[dict[str, str]]: A ranked list of recommended papers,
+            list[dict[str, Any]]: A ranked list of recommended papers,
                 sorted by highest similarity.
         """
 
@@ -77,7 +78,7 @@ class Recommender:
         # Compute embeddings for candidate papers
         candidate_embeddings = np.array(
             [
-                self.vectorizer.process(paper["title"] + " " + paper["abstract"])
+                self.vectorizer.process(paper.title + " " + paper.abstract)
                 for paper in candidate_papers
             ]
         )
@@ -89,14 +90,14 @@ class Recommender:
         max_similarities = similarity_matrix.max(axis=1)
 
         # Rank candidate papers by similarity (descending order)
-        ranked_papers_sorted = sorted(
+        sorted_papers: list[tuple[Paper, float]] = sorted(
             zip(candidate_papers, max_similarities), key=lambda x: x[1], reverse=True
         )
 
         # Extract ranked papers with similarity scores
         ranked_papers: list[dict[str, Any]] = [
-            {"title": paper["title"], "abstract": paper["abstract"], "score": float(score)}
-            for paper, score in ranked_papers_sorted
+            {"title": paper.title, "abstract": paper.abstract, "score": float(score)}
+            for paper, score in sorted_papers
         ]
 
         return ranked_papers[:top_k] if top_k else ranked_papers

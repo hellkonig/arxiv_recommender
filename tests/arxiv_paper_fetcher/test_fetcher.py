@@ -25,8 +25,8 @@ class TestArxivFetcher(unittest.TestCase):
 
         paper = self.fetcher.get_paper_by_id("1234.56789")
         self.assertIsNotNone(paper)
-        self.assertEqual(paper["title"], "Sample Paper")
-        self.assertEqual(paper["abstract"], "Sample Abstract")
+        self.assertEqual(paper.title, "Sample Paper")
+        self.assertEqual(paper.abstract, "Sample Abstract")
 
     @patch("requests.get")
     def test_get_paper_by_id_failure(self, mock_get):
@@ -67,8 +67,8 @@ class TestArxivFetcher(unittest.TestCase):
 
         papers = self.fetcher.get_daily_papers(category="cs.AI")
         self.assertEqual(len(papers), 2)
-        self.assertEqual(papers[0]["title"], "Paper 1")
-        self.assertEqual(papers[1]["abstract"], "Abstract 2")
+        self.assertEqual(papers[0].title, "Paper 1")
+        self.assertEqual(papers[1].abstract, "Abstract 2")
 
     @patch("requests.get")
     def test_get_daily_papers_no_results(self, mock_get):
