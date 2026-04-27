@@ -1,22 +1,18 @@
 import os
 import argparse
 import logging
-from typing import Dict, List, Any
 
+from arxiv_recommender.schemas import AppConfig, Paper
 from arxiv_recommender.utils.json_handler import load_json, save_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
-from arxiv_recommender.recommendation.recommendation import (
-    Recommender,
-)
+from arxiv_recommender.recommendation.recommendation import Recommender
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Constants
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
@@ -27,7 +23,7 @@ def ensure_data_directory() -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
+def load_config(config_path: str) -> AppConfig:
     """
     Loads the configuration file.
 
@@ -35,19 +31,21 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config_path (str): Path to the configuration JSON file.
 
     Returns:
-        Dict[str, Any]: Parsed configuration dictionary.
+        AppConfig: Parsed configuration object.
 
     Raises:
         FileNotFoundError: If the configuration file is missing.
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    return load_json(config_path)
+    config_data = load_json(config_path)
+    return AppConfig.model_validate(config_data)
+
 
 def load_favorite_papers(
         favorite_papers_path: str,
-        fetcher: ArxivFetcher
-    ) -> List[Dict[str, str]]:
+        fetcher: ArxivFetcher,
+    ) -> list[Paper]:
     """
     Loads or prompts for favorite papers.
 
@@ -56,7 +54,7 @@ def load_favorite_papers(
         fetcher (ArxivFetcher): Instance responsible for fetching metadata.
 
     Returns:
-        List[Dict[str, str]]: List of favorite papers' metadata.
+        list[Paper]: List of Paper objects containing favorite papers.
     """
     logging.info(f"Using favorite papers file: {favorite_papers_path}")
 
@@ -67,21 +65,23 @@ def load_favorite_papers(
         os.makedirs(os.path.dirname(favorite_papers_path), exist_ok=True)
         save_json(favorite_papers_path, [])
 
-    favorite_papers_metadata: List[Dict[str, str]] = load_json(
+    favorite_papers_data: list[dict[str, str]] = load_json(
         favorite_papers_path
     )
 
-    if not favorite_papers_metadata:
+    if not favorite_papers_data:
         logging.info("No favorite papers provided. Prompting user input...")
-        favorite_papers_metadata = get_favorite_papers_from_user(
+        favorite_papers = get_favorite_papers_from_user(
             favorite_papers_path,
             fetcher,
         )
+    else:
+        favorite_papers = [Paper(**paper) for paper in favorite_papers_data]
 
     logging.info(
-        f"Successfully loaded {len(favorite_papers_metadata)} favorite papers."
+        f"Successfully loaded {len(favorite_papers)} favorite papers."
     )
-    return favorite_papers_metadata
+    return favorite_papers
 
 
 def main():
@@ -102,36 +102,21 @@ def main():
 
     config = load_config(args.config)
 
-    # Read values from config
-    favorite_papers_path = config.get(
-        "favorite_papers_path",
-        "data/favorite_papers.json"
-    )
-    vectorizer_name = config.get(
-        "vectorizer",
-        {
-            "module": "distil_bert",
-            "class": "DistilBERTEmbedding",
-            "model": "./data/models/distilbert"
-        }
-    )
-    top_k = config.get("top_k", 10)
-
     fetcher = ArxivFetcher()
-    favorite_papers_metadata = load_favorite_papers(
-        favorite_papers_path,
-        fetcher
+    favorite_papers = load_favorite_papers(
+        config.favorite_papers_path,
+        fetcher,
     )
     vectorizer = load_vectorization_model(
-        module_name=vectorizer_name["module"],
-        class_name=vectorizer_name["class"],
-        model_name=vectorizer_name["model"],
+        module_name=config.vectorizer.module,
+        class_name=config.vectorizer.class_name,
+        model_name=config.vectorizer.model,
     )
-    recommender = Recommender(vectorizer, favorite_papers_metadata)
+    recommender = Recommender(vectorizer, favorite_papers)
 
     daily_papers = fetcher.get_daily_papers()
     recommended_papers = recommender.recommend_by_papers(
-        daily_papers, top_k=top_k
+        daily_papers, top_k=config.top_k
     )
 
     logging.info("Top recommended papers:")

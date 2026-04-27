@@ -1,13 +1,14 @@
 import logging
-from typing import List, Dict
 
+from arxiv_recommender.schemas import Paper
 from arxiv_recommender.utils.json_handler import save_json
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+
 
 def get_favorite_papers_from_user(
         output_file: str,
         fetcher: ArxivFetcher
-    ) -> List[Dict[str, str]]:
+    ) -> list[Paper]:
     """
     Prompts the user to enter arXiv IDs, fetches metadata, and saves it.
 
@@ -16,7 +17,7 @@ def get_favorite_papers_from_user(
         fetcher (ArxivFetcher): Instance responsible for fetching metadata.
 
     Returns:
-        List[Dict[str, str]]: List of dictionaries containing paper metadata.
+        list[Paper]: List of Paper objects containing paper metadata.
     """
     logging.info("No favorite papers provided. Enter arXiv IDs manually.")
 
@@ -30,10 +31,10 @@ def get_favorite_papers_from_user(
             break
 
         try:
-            paper_metadata = fetcher.get_paper_by_id(paper_id)
-            if paper_metadata:
-                papers.append(paper_metadata)
-                logging.info(f"Added: {paper_metadata['title']}")
+            paper = fetcher.get_paper_by_id(paper_id)
+            if paper:
+                papers.append(paper)
+                logging.info(f"Added: {paper.title}")
             else:
                 logging.warning(f"Paper ID {paper_id} not found.")
         except Exception as e:
@@ -42,7 +43,7 @@ def get_favorite_papers_from_user(
     if not papers:
         raise ValueError("At least one valid arXiv paper is required.")
 
-    save_json(output_file, papers)
+    save_json(output_file, [paper.model_dump() for paper in papers])
 
     logging.info(f"Loaded {len(papers)} favorite papers and saved them to {output_file}.")
     return papers
