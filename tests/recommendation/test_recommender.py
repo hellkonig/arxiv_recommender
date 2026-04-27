@@ -13,9 +13,7 @@ class TestRecommender(unittest.TestCase):
     def setUp(self):
         """Setup mock vectorizer and sample papers for testing."""
         self.mock_vectorizer = MagicMock(spec=DistilBERTEmbedding)
-        self.mock_vectorizer.process.side_effect = lambda text: np.array(
-            [len(text)]
-        )
+        self.mock_vectorizer.process.side_effect = lambda text: np.array([len(text)])
 
         self.favorite_papers = [
             Paper(title="AI Research", abstract="This paper discusses AI."),

@@ -27,9 +27,7 @@ class TestUserInput(unittest.TestCase):
         self.assertEqual(papers[0].title, "Paper 1")
         self.assertEqual(papers[1].title, "Paper 2")
 
-        mock_save_json.assert_called_once_with(
-            output_file, [p.model_dump() for p in papers]
-        )
+        mock_save_json.assert_called_once_with(output_file, [p.model_dump() for p in papers])
 
     @patch("arxiv_recommender.utils.json_handler.save_json")
     @patch("builtins.input", side_effect=[""])

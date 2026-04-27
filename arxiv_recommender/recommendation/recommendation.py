@@ -17,9 +17,7 @@ class Recommender:
             favorite papers.
     """
 
-    def __init__(
-        self, vectorizer: DistilBERTEmbedding, favorite_papers: list[Paper]
-    ) -> None:
+    def __init__(self, vectorizer: DistilBERTEmbedding, favorite_papers: list[Paper]) -> None:
         """
         Initializes the recommender with a text vectorization model and
         favorite paper metadata.
