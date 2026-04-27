@@ -37,21 +37,21 @@ class TestParser(unittest.TestCase):
         root = ET.fromstring(self.sample_entry)
         entry = root.find("{http://www.w3.org/2005/Atom}entry")
         metadata = extract_metadata(entry)
-        self.assertEqual(metadata["title"], "Sample Paper")
-        self.assertEqual(metadata["abstract"], "Sample Abstract")
+        self.assertEqual(metadata.title, "Sample Paper")
+        self.assertEqual(metadata.abstract, "Sample Abstract")
 
     def test_parse_paper_info(self):
         """Test extracting title and abstract from a single entry"""
         paper = parse_paper_info(self.sample_entry)
-        self.assertEqual(paper["title"], "Sample Paper")
-        self.assertEqual(paper["abstract"], "Sample Abstract")
+        self.assertEqual(paper.title, "Sample Paper")
+        self.assertEqual(paper.abstract, "Sample Abstract")
 
     def test_parse_papers(self):
         """Test extracting multiple papers from a feed"""
-        papers = parse_papers(self.sample_feed)  # ✅ Now passing a string
+        papers = parse_papers(self.sample_feed)
         self.assertEqual(len(papers), 2)
-        self.assertEqual(papers[0]["title"], "Paper 1")
-        self.assertEqual(papers[1]["abstract"], "Abstract 2")
+        self.assertEqual(papers[0].title, "Paper 1")
+        self.assertEqual(papers[1].abstract, "Abstract 2")
 
 
 if __name__ == "__main__":

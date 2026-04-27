@@ -2,9 +2,10 @@ import xml.etree.ElementTree as ET
 from typing import Optional
 
 from arxiv_recommender.arxiv_paper_fetcher.utils import remove_control_characters
+from arxiv_recommender.schemas import Paper
 
 
-def extract_metadata(entry: ET.Element) -> dict[str, str]:
+def extract_metadata(entry: ET.Element) -> Paper:
     """
     Extracts paper's meta data from a single XML entry.
 
@@ -12,7 +13,7 @@ def extract_metadata(entry: ET.Element) -> dict[str, str]:
         entry (ET.Element): An XML element representing a paper entry.
 
     Returns:
-        dict[str, str]: A dictionary containing 'title' and 'abstract'.
+        Paper: A Paper object containing 'title' and 'abstract'.
     """
     title_elem = entry.find("{http://www.w3.org/2005/Atom}title")
     summary_elem = entry.find("{http://www.w3.org/2005/Atom}summary")
@@ -32,10 +33,10 @@ def extract_metadata(entry: ET.Element) -> dict[str, str]:
     if not isinstance(title, str) or not isinstance(abstract, str):
         raise TypeError("Title or abstract is not a string in the entry.")
 
-    return {"title": title, "abstract": abstract}
+    return Paper(title=title, abstract=abstract)
 
 
-def parse_paper_info(xml_data: str) -> Optional[dict[str, str]]:
+def parse_paper_info(xml_data: str) -> Optional[Paper]:
     """
     Parses a single paper's information (title and abstract) from the arXiv API XML response.
 
@@ -43,7 +44,7 @@ def parse_paper_info(xml_data: str) -> Optional[dict[str, str]]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        Optional[dict[str, str]]: A dictionary containing 'title' and 'abstract' if successful, else None.
+        Optional[Paper]: A Paper object containing 'title' and 'abstract' if successful, else None.
     """
     try:
         root = ET.fromstring(xml_data)
@@ -55,7 +56,7 @@ def parse_paper_info(xml_data: str) -> Optional[dict[str, str]]:
         return None
 
 
-def parse_papers(xml_data: str) -> list[dict[str, str]]:
+def parse_papers(xml_data: str) -> list[Paper]:
     """
     Parses multiple papers' information from the arXiv API XML response.
 
@@ -63,7 +64,7 @@ def parse_papers(xml_data: str) -> list[dict[str, str]]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        list[dict[str, str]]: A list of dictionaries, each containing 'title' and 'abstract'.
+        list[Paper]: A list of Paper objects, each containing 'title' and 'abstract'.
     """
     papers = []
     try:
