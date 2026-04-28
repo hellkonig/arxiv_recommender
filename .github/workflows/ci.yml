@@ -21,7 +21,7 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check .
       - name: Run mypy
-        run: uv run mypy arxiv_recommender
+        run: uv run mypy src/arxiv_recommender/
 
   test:
     runs-on: ubuntu-latest
