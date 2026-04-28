@@ -6,6 +6,12 @@ venv
 .pytest_cache
 uv.lock
 
+# Build artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+
 configs/
 *.json
 !configs/config.json.example

@@ -2,9 +2,9 @@ from pydantic import BaseModel, Field
 
 
 class VectorizerConfig(BaseModel):
-    module: str = Field(description="Module name for the vectorizer")
+    module_name: str = Field(description="Module name for the vectorizer")
     class_name: str = Field(description="Class name for the vectorizer")
-    model: str = Field(description="Path or name of the model")
+    model_name: str = Field(description="Path or name of the model")
 
     model_config = {"frozen": True}
 
