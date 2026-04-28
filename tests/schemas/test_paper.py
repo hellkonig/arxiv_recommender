@@ -8,8 +8,7 @@ class TestPaper:
     def test_create_paper_with_valid_data(self):
         """Test creating a Paper with valid data."""
         paper = Paper(
-            title="Sample Paper Title",
-            abstract="This is a sample abstract for testing purposes."
+            title="Sample Paper Title", abstract="This is a sample abstract for testing purposes."
         )
         assert paper.title == "Sample Paper Title"
         assert paper.abstract == "This is a sample abstract for testing purposes."

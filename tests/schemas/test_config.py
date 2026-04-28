@@ -10,7 +10,7 @@ class TestVectorizerConfig:
         config = VectorizerConfig(
             module_name="distil_bert",
             class_name="DistilBERTEmbedding",
-            model_name="distilbert-base-uncased"
+            model_name="distilbert-base-uncased",
         )
         assert config.module_name == "distil_bert"
         assert config.class_name == "DistilBERTEmbedding"
@@ -19,9 +19,7 @@ class TestVectorizerConfig:
     def test_vectorizer_is_frozen(self):
         """Test that VectorizerConfig is immutable."""
         config = VectorizerConfig(
-            module_name="test",
-            class_name="TestClass",
-            model_name="test-model"
+            module_name="test", class_name="TestClass", model_name="test-model"
         )
         with pytest.raises(Exception):
             config.module_name = "new_module"
@@ -29,9 +27,7 @@ class TestVectorizerConfig:
     def test_vectorizer_serialization(self):
         """Test VectorizerConfig can be serialized to dict."""
         config = VectorizerConfig(
-            module_name="test",
-            class_name="TestClass",
-            model_name="test-model"
+            module_name="test", class_name="TestClass", model_name="test-model"
         )
         data = config.model_dump()
         assert data["module_name"] == "test"
@@ -49,9 +45,9 @@ class TestAppConfig:
             vectorizer=VectorizerConfig(
                 module_name="distil_bert",
                 class_name="DistilBERTEmbedding",
-                model_name="distilbert-base-uncased"
+                model_name="distilbert-base-uncased",
             ),
-            top_k=10
+            top_k=10,
         )
         assert config.favorite_papers_path == "favorite_papers.json"
         assert config.top_k == 10
@@ -62,10 +58,8 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test",
-                class_name="TestClass",
-                model_name="test"
-            )
+                module_name="test", class_name="TestClass", model_name="test"
+            ),
         )
         assert config.top_k == 10
 
@@ -74,11 +68,9 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test",
-                class_name="TestClass",
-                model_name="test"
+                module_name="test", class_name="TestClass", model_name="test"
             ),
-            top_k=5
+            top_k=5,
         )
         assert config.top_k == 5
 
@@ -87,10 +79,8 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test",
-                class_name="TestClass",
-                model_name="test"
-            )
+                module_name="test", class_name="TestClass", model_name="test"
+            ),
         )
         with pytest.raises(Exception):
             config.top_k = 20
@@ -100,11 +90,9 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test",
-                class_name="TestClass",
-                model_name="test"
+                module_name="test", class_name="TestClass", model_name="test"
             ),
-            top_k=5
+            top_k=5,
         )
         data = config.model_dump()
         assert data["favorite_papers_path"] == "favorites.json"
@@ -118,9 +106,9 @@ class TestAppConfig:
             "vectorizer": {
                 "module_name": "bert",
                 "class_name": "BERTEmbedding",
-                "model_name": "bert-base"
+                "model_name": "bert-base",
             },
-            "top_k": 20
+            "top_k": 20,
         }
         config = AppConfig.model_validate(data)
         assert config.favorite_papers_path == "my_favorites.json"
