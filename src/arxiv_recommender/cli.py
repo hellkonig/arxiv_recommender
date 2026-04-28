@@ -59,9 +59,9 @@ def main() -> None:
         favorite_papers = get_favorite_papers_from_user(config.favorite_papers_path, fetcher)
 
     vectorizer = load_vectorization_model(
-        module_name=config.vectorizer.module,
+        module_name=config.vectorizer.module_name,
         class_name=config.vectorizer.class_name,
-        model_name=config.vectorizer.model,
+        model_name=config.vectorizer.model_name,
     )
     recommender = Recommender(vectorizer, favorite_papers)
 

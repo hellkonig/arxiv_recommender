@@ -3,90 +3,120 @@
 `arxiv_recommender` is a content-based recommendation system that helps researchers discover relevant papers from arXiv. Given a set of favorite papers, it retrieves the most relevant ones using state-of-the-art NLP models.
 
 ## Project Structure
+
 ```
 arxiv_recommender/
-│── arxiv_recommender/
-|   │── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
-|   │── text_vectorization/       # Handles text embedding models
-|   │── recommendation/           # Core recommendation logic
-|   │── utils/                    # Utility functions
-|   │   │── json_handler.py       # JSON file handling
-|   │   │── model_loader.py       # Dynamic text vectorizer loader
-|   │   │── user_input.py         # Handles user-provided paper IDs
-|   │── data/                     # Stores favorite papers & config files
-|   |   │── config.json           # User configuration file
-|   |   │── favorite_papers.json  # Favorite paper metadata (auto-generated)
-    |   |── models/               # Stores local models
-|   │── bin/                      # Stores cli
-|       |── cli.py                # Command-line interface
-│── tests/                        # Unit tests for each module
-│── README.md                     # Project documentation
-│── requirements.txt              # Dependencies
-│── setup.py                      # Package installation script (working in progress)
+├── src/
+│   └── arxiv_recommender/           # Python package
+│       ├── cli.py                    # CLI entry point
+│       ├── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
+│       ├── text_vectorization/       # Handles text embedding models
+│       ├── recommendation/           # Core recommendation logic
+│       ├── schemas/                  # Pydantic models
+│       └── utils/                    # Utility functions
+├── configs/
+│   └── config.json.example           # Configuration template
+├── tests/                            # Unit tests
+├── pyproject.toml                    # Project configuration
+└── README.md                         # Project documentation
 ```
 
-## Getting Started
-### Installation
-Ensure you have Python 3.8+ installed, then run:
+## Installation
+
+### 1. Clone and Install
+
 ```bash
 git clone https://github.com/your-repo/arxiv_recommender.git
 cd arxiv_recommender
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
-### Configuration
-Modify ` config.json` to set your preference:
+### 2. Create Configuration
+
+Copy the example config and customize:
+
+```bash
+cp configs/config.json.example configs/config.json
+```
+
+## Configuration
+
+Edit `configs/config.json`:
+
 ```json
 {
-    "favorite_papers_path": "arxiv_recommender/data/favorite_papers.json",
+    "favorite_papers_path": "favorite_papers.json",
     "vectorizer": {
-        "module": "distil_bert",
-        "class": "DistilBERTEmbedding",
-        "model": "distilbert-base-uncased"
+        "module_name": "distil_bert",
+        "class_name": "DistilBERTEmbedding",
+        "model_name": "distilbert-base-uncased"
     },
-    "top_k": 5
+    "top_k": 10
 }
 ```
-- `favorite_papers_path` -> Path to favorite papers file.
-- `vectorizer` -> Embedding model.
-- `top_k` -> Number of recommended papers.
 
-### Running the CLI
-You can run the arXiv Recommender CLI in one of the following ways:
+| Field | Description |
+|-------|-------------|
+| `favorite_papers_path` | Path to favorite papers JSON file |
+| `vectorizer.module_name` | Module name for vectorizer |
+| `vectorizer.class_name` | Class name for vectorizer |
+| `vectorizer.model_name` | Model name or local path |
+| `top_k` | Number of recommended papers |
 
-#### Local Usage with Python
+## Custom Models
 
-##### Environment Setup
-We strongly recommend using a [Python virtual environment](https://docs.python.org/3/library/venv.html) to isolate dependencies:
+### Using a Custom Model
+
+1. Place your model in a local directory (e.g., `./models/my-model/`)
+2. Update `configs/config.json`:
+
+```json
+{
+    "vectorizer": {
+        "model_name": "./models/my-model"
+    }
+}
+```
+
+### Model Cache Location
+
+Models are cached at `~/.cache/huggingface/hub/`. To use a custom location:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
-pip install -r requirements.txt
+export HF_HOME=/your/custom/path
 ```
-##### Running from Source (Module Mode)
-Run the CLI directly from the source using Python’s module syntax:
-```bash
-python3 -m arxiv_recommender.bin.cli --config path/to/config.json
-```
-The --config flag is required.
 
-If favorite_papers.json is missing or empty, the CLI will prompt you to enter arXiv paper IDs manually.
+## Running the CLI
 
-##### Running After Installation (via setup.py) (Working in Progress)
-You’ll be able to install this project as a Python package and use the CLI globally:
-```bash
-pip install .
-arxiv-recommender --config path/to/config.json
-```
-Setup instructions and entry point registration will be added in future versions.
+### Option 1: Using Entry Point (after installation)
 
-#### Running via Docker (Working in Progress)
-Docker provides a self-contained environment, so no Python or virtual environment is needed on your machine:
 ```bash
-docker run --rm -v $(pwd)/data:/path/to/data arxiv-recommender --config /path/to/config.json
+arxiv-recommend --config configs/config.json
 ```
-Docker support and prebuilt images are planned for a future release.
+
+### Option 2: Running from Source
+
+```bash
+pip install -e .
+python -m arxiv_recommender.cli --config configs/config.json
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--config` | Path to configuration JSON file (required) |
+| `--date_of_pulling_papers` | Date in YYYYMMDD format (optional, defaults to today) |
+
+If `favorite_papers.json` is missing or empty, the CLI will prompt you to enter arXiv paper IDs.
+
+## Testing
+
+```bash
+pip install -e ".[test]"
+python -m pytest
+```
 
 ## License
+
 This project is licensed under the MIT License.
