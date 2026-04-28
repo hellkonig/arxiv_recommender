@@ -17,6 +17,9 @@ dependencies = [
     "pydantic>=2.0",
 ]
 
+[project.scripts]
+arxiv-recommend = "arxiv_recommender.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.1", "mypy>=1.0", "pre-commit>=3.0", "types-requests"]
 test = ["pytest>=7.0"]

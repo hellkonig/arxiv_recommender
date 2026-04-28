@@ -6,8 +6,6 @@ venv
 .pytest_cache
 uv.lock
 
-arxiv_recommender/data/*.json
-!arxiv_recommender/data/.gitkeep
-
-arxiv_recommender/data/models/*
-!arxiv_recommender/data/models/.gitkeep
+configs/
+*.json
+!configs/config.json.example
