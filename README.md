@@ -47,9 +47,9 @@ Edit `configs/config.json`:
 {
     "favorite_papers_path": "favorite_papers.json",
     "vectorizer": {
-        "module": "distil_bert",
+        "module_name": "distil_bert",
         "class_name": "DistilBERTEmbedding",
-        "model": "distilbert-base-uncased"
+        "model_name": "distilbert-base-uncased"
     },
     "top_k": 10
 }
@@ -58,9 +58,9 @@ Edit `configs/config.json`:
 | Field | Description |
 |-------|-------------|
 | `favorite_papers_path` | Path to favorite papers JSON file |
-| `vectorizer.module` | Module name for vectorizer |
+| `vectorizer.module_name` | Module name for vectorizer |
 | `vectorizer.class_name` | Class name for vectorizer |
-| `vectorizer.model` | Model name or local path |
+| `vectorizer.model_name` | Model name or local path |
 | `top_k` | Number of recommended papers |
 
 ## Custom Models
@@ -73,7 +73,7 @@ Edit `configs/config.json`:
 ```json
 {
     "vectorizer": {
-        "model": "./models/my-model"
+        "model_name": "./models/my-model"
     }
 }
 ```
