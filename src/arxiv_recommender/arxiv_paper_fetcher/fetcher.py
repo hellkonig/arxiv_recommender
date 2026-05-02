@@ -3,6 +3,7 @@ import requests
 from typing import Optional
 
 from arxiv_recommender.schemas import Paper
+from arxiv_recommender.utils.retry import retry_with_backoff
 from .parser import parse_paper_info, parse_papers
 from .utils import format_arxiv_query
 
@@ -27,6 +28,7 @@ class ArxivFetcher:
         self.max_results = max_results
         self.timeout = timeout
 
+    @retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
     def get_paper_by_id(self, paper_id: str) -> Optional[Paper]:
         """
         Fetches a single paper's title and abstract using its arXiv ID.
@@ -41,15 +43,12 @@ class ArxivFetcher:
             requests.RequestException: If the API request fails.
         """
         url = f"{self.base_url}id_list={paper_id}"
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            logging.error(f"Failed to fetch paper {paper_id}: {e}")
-            raise
+        response = requests.get(url, timeout=self.timeout)
+        response.raise_for_status()
 
         return parse_paper_info(response.text)
 
+    @retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
     def get_daily_papers(
         self, date: Optional[str] = None, category: Optional[str] = None
     ) -> list[Paper]:
@@ -72,12 +71,8 @@ class ArxivFetcher:
         logging.info(f"Fetching daily papers with query: {query}")
         url = f"{self.base_url}{query}&max_results={self.max_results}"
 
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            logging.error(f"Failed to fetch daily papers: {e}")
-            raise
+        response = requests.get(url, timeout=self.timeout)
+        response.raise_for_status()
 
         papers = parse_papers(response.text)
         logging.info(
