@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from arxiv_recommender.schemas import AppConfig
+from arxiv_recommender.text_vectorization import EmbeddingCache
 from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 from arxiv_recommender.utils.paper_loader import load_favorite_papers
@@ -58,10 +59,12 @@ def main() -> None:
         logging.info("No favorite papers provided. Prompting user input...")
         favorite_papers = get_favorite_papers_from_user(config.favorite_papers_path, fetcher)
 
+    cache = EmbeddingCache()
     vectorizer = load_vectorization_model(
         module_name=config.vectorizer.module_name,
         class_name=config.vectorizer.class_name,
         model_name=config.vectorizer.model_name,
+        cache=cache,
     )
     recommender = Recommender(vectorizer, favorite_papers)
 
