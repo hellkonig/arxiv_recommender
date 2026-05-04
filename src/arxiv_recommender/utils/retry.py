@@ -1,9 +1,12 @@
-import logging
+"""Retry decorator with exponential backoff for handling transient failures."""
+
 import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
 import requests
+
+from arxiv_recommender.utils.logging import get_logger
 
 T = TypeVar("T")
 
@@ -14,20 +17,21 @@ def retry_with_backoff(
     backoff_factor: float = 2.0,
     exceptions: tuple = (requests.RequestException,),
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
-    """
-    Decorator that retries a function with exponential backoff.
+    """Decorates a function with retry logic and exponential backoff.
 
     Args:
-        max_retries (int): Maximum number of retry attempts (default: 3).
-        initial_delay (float): Initial delay in seconds (default: 1.0).
-        backoff_factor (float): Multiplier for delay after each retry (default: 2.0).
-        exceptions (tuple): Tuple of exception types to catch and retry (default: requests.RequestException).
+        max_retries: Maximum number of retry attempts (default: 3).
+        initial_delay: Initial delay in seconds (default: 1.0).
+        backoff_factor: Multiplier for delay after each retry (default: 2.0).
+        exceptions: Tuple of exception types to catch and retry (default: requests.RequestException).
 
     Returns:
-        Callable: Decorated function that retries on failure.
+        Decorated function that retries on failure.
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        logger = get_logger(func.__module__)
+
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             delay = initial_delay
@@ -39,14 +43,21 @@ def retry_with_backoff(
                 except exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
-                        logging.warning(
-                            f"Attempt {attempt + 1}/{max_retries + 1} failed: {e}. "
-                            f"Retrying in {delay:.1f}s..."
+                        logger.warning(
+                            "Attempt %d/%d failed: %s. Retrying in %.1fs...",
+                            attempt + 1,
+                            max_retries + 1,
+                            e,
+                            delay,
                         )
                         time.sleep(delay)
                         delay *= backoff_factor
                     else:
-                        logging.error(f"All {max_retries + 1} attempts failed. Last error: {e}")
+                        logger.error(
+                            "All %d attempts failed. Last error: %s",
+                            max_retries + 1,
+                            e,
+                        )
 
             if last_exception:
                 raise last_exception
