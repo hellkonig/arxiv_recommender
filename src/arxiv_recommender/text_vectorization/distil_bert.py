@@ -15,13 +15,13 @@ class DistilBERTEmbedding:
         tokenizer (DistilBertTokenizer): Tokenizer for DistilBERT.
         model (DistilBertModel): DistilBERT model for embeddings.
         max_length (int): Maximum token length per chunk (default: 512).
-        cache (EmbeddingCache | None): Optional embedding cache.
+        cache (EmbeddingCache): Embedding cache for caching embeddings.
     """
 
     def __init__(
         self,
         model_name: str = "distilbert-base-uncased",
-        cache: EmbeddingCache | None = None,
+        cache_size: int = 1000,
     ):
         """
         Initializes the tokenizer and model.
@@ -29,13 +29,13 @@ class DistilBERTEmbedding:
         Args:
             model_name (str, optional): Pre-trained DistilBERT model name.
                                         Defaults to "distilbert-base-uncased".
-            cache (EmbeddingCache | None): Optional embedding cache.
+            cache_size (int): Maximum number of embeddings to cache.
         """
         self.model_name = model_name
         self.tokenizer = DistilBertTokenizer.from_pretrained(model_name)
         self.model = DistilBertModel.from_pretrained(model_name)
         self.max_length = 512
-        self.cache = cache
+        self.cache = EmbeddingCache(max_size=cache_size)
 
     def process(self, text: str) -> np.ndarray:
         """
@@ -48,17 +48,15 @@ class DistilBERTEmbedding:
         Returns:
             np.ndarray: The aggregated text embedding.
         """
-        if self.cache is not None:
-            cached_embedding = self.cache.get(text)
-            if cached_embedding is not None:
-                return cached_embedding
+        cached_embedding = self.cache.get(text)
+        if cached_embedding is not None:
+            return cached_embedding
 
         tokenized_chunks = self.tokenize(text)
         embedding = self.vectorize(tokenized_chunks)
         result = embedding.cpu().numpy()
 
-        if self.cache is not None:
-            self.cache.put(text, result)
+        self.cache.put(text, result)
 
         return result
 

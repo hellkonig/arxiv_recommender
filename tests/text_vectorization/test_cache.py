@@ -59,6 +59,19 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertEqual(stats["hits"], 2)
         self.assertEqual(stats["misses"], 0)
 
+    def test_cache_hit_moves_key_to_end(self):
+        cache = EmbeddingCache(max_size=3)
+        cache.put("a", np.array([1.0]))
+        cache.put("b", np.array([2.0]))
+        cache.put("c", np.array([3.0]))
+        keys_before = list(cache._cache.keys())
+        cache.get("a")
+        keys_after = list(cache._cache.keys())
+        self.assertNotEqual(keys_before, keys_after)
+        self.assertEqual(keys_after[0], keys_before[1])
+        self.assertEqual(keys_after[1], keys_before[2])
+        self.assertEqual(keys_after[2], keys_before[0])
+
 
 if __name__ == "__main__":
     unittest.main()
