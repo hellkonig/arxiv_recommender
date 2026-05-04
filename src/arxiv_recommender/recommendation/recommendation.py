@@ -3,7 +3,7 @@ from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
 from arxiv_recommender.schemas import Paper
-from ..text_vectorization.distil_bert import DistilBERTEmbedding
+from ..text_vectorization import DistilBERTEmbedding
 
 
 class Recommender:
@@ -11,19 +11,23 @@ class Recommender:
     A content-based recommendation system for arXiv papers.
 
     Attributes:
-        vectorizer (TextVectorization): A text vectorization instance for
+        vectorizer (DistilBERTEmbedding): A text vectorization instance for
             computing embeddings.
         favorite_paper_embeddings (np.ndarray): Precomputed embeddings for
             favorite papers.
     """
 
-    def __init__(self, vectorizer: DistilBERTEmbedding, favorite_papers: list[Paper]) -> None:
+    def __init__(
+        self,
+        vectorizer: DistilBERTEmbedding,
+        favorite_papers: list[Paper],
+    ) -> None:
         """
         Initializes the recommender with a text vectorization model and
         favorite paper metadata.
 
         Args:
-            vectorizer (TextVectorization): An instance of the text
+            vectorizer (DistilBERTEmbedding): An instance of the text
                 vectorization class.
             favorite_papers (list[Paper]): A list of favorite papers,
                 each containing "title" and "abstract".

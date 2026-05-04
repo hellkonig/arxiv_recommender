@@ -62,6 +62,7 @@ def main() -> None:
         module_name=config.vectorizer.module_name,
         class_name=config.vectorizer.class_name,
         model_name=config.vectorizer.model_name,
+        cache_size=config.vectorizer.cache_size,
     )
     recommender = Recommender(vectorizer, favorite_papers)
 

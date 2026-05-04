@@ -7,9 +7,11 @@ Content-based arXiv paper recommender system using DistilBERT embeddings.
 ```bash
 uv run python -m pytest            # Run tests (uv)
 uv run ruff check .                 # Run linting (uv)
+uv run ruff format --check .        # Run formatting check (uv)
 uv run python -m mypy               # Run type checking (uv)
 uv run python -m pytest tests/path/to/test_file.py::TestClass::test_method  # Single test
 python3 -m arxiv_recommender.cli --config path/to/config.json   # Run CLI
+pre-commit run                      # Run all local checks (lint + format + mypy)
 ```
 
 ## Project Structure
@@ -43,9 +45,9 @@ arxiv_recommender/
 - Branch: `feat/<name>`, `fix/<name>`, `chore/<name>`
 - Commit: `<type>: <description>` (e.g., `feat: add user auth`)
 - PR title: `feat: add user auth`
-- **Before every push**: Run local CI (lint + typecheck + tests):
+- **Before every push**: Run local CI (lint + format + typecheck + tests):
   ```bash
-  uv run ruff check . && uv run python -m mypy && uv run python -m pytest
+  uv run ruff check . && uv run ruff format --check . && uv run python -m mypy && uv run python -m pytest
   ```
 
 ## Prohibitions
