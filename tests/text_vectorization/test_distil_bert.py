@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import torch
+import numpy as np
 
 from arxiv_recommender.text_vectorization.distil_bert import DistilBERTEmbedding
 
@@ -30,7 +31,7 @@ class TestDistilBERTEmbedding(unittest.TestCase):
         embedding = embedder.process("This is a sample input text.")
 
         # Assertions
-        self.assertIsInstance(embedding, torch.Tensor)
+        self.assertIsInstance(embedding, np.ndarray)
         self.assertEqual(embedding.shape, (768,))  # After mean pooling
 
         # Ensure model/tokenizer were called correctly

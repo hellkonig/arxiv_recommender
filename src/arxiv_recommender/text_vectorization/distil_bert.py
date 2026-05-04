@@ -1,5 +1,8 @@
+import numpy as np
 import torch
 from transformers import DistilBertTokenizer, DistilBertModel
+
+from arxiv_recommender.text_vectorization.cache import EmbeddingCache
 
 
 class DistilBERTEmbedding:
@@ -12,22 +15,29 @@ class DistilBERTEmbedding:
         tokenizer (DistilBertTokenizer): Tokenizer for DistilBERT.
         model (DistilBertModel): DistilBERT model for embeddings.
         max_length (int): Maximum token length per chunk (default: 512).
+        cache (EmbeddingCache | None): Optional embedding cache.
     """
 
-    def __init__(self, model_name: str = "distilbert-base-uncased"):
+    def __init__(
+        self,
+        model_name: str = "distilbert-base-uncased",
+        cache: EmbeddingCache | None = None,
+    ):
         """
         Initializes the tokenizer and model.
 
         Args:
             model_name (str, optional): Pre-trained DistilBERT model name.
                                         Defaults to "distilbert-base-uncased".
+            cache (EmbeddingCache | None): Optional embedding cache.
         """
         self.model_name = model_name
         self.tokenizer = DistilBertTokenizer.from_pretrained(model_name)
         self.model = DistilBertModel.from_pretrained(model_name)
-        self.max_length = 512  # DistilBERT's max input length
+        self.max_length = 512
+        self.cache = cache
 
-    def process(self, text: str) -> torch.Tensor:
+    def process(self, text: str) -> np.ndarray:
         """
         Generates embeddings for a given text by splitting it into chunks
         and aggregating the chunk embeddings.
@@ -36,10 +46,21 @@ class DistilBERTEmbedding:
             text (str): Input text string.
 
         Returns:
-            torch.Tensor: The aggregated text embedding.
+            np.ndarray: The aggregated text embedding.
         """
+        if self.cache is not None:
+            cached_embedding = self.cache.get(text)
+            if cached_embedding is not None:
+                return cached_embedding
+
         tokenized_chunks = self.tokenize(text)
-        return self.vectorize(tokenized_chunks)
+        embedding = self.vectorize(tokenized_chunks)
+        result = embedding.cpu().numpy()
+
+        if self.cache is not None:
+            self.cache.put(text, result)
+
+        return result
 
     def tokenize(self, text: str) -> list[torch.Tensor]:
         """
