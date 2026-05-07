@@ -80,26 +80,30 @@ class DistilBERTEmbedding:
         return [tokens["input_ids"], tokens["attention_mask"]]
 
     def vectorize(self, tokenized_chunks: list[torch.Tensor]) -> torch.Tensor:
-        """
-        Get the embedding vectors for the input splitted tokens
-        and aggregating the chunk embeddings.
+        """Get embedding vectors for tokenized chunks with mean pooling.
 
         Args:
-            list[torch.Tensor]: List of tokenized chunks.
+            tokenized_chunks: List of tokenized chunks [input_ids, attention_mask].
 
         Returns:
-            torch.Tensor: The aggregated text embedding.
+            Aggregated text embedding as tensor.
         """
         input_ids = tokenized_chunks[0]
         attention_mask = tokenized_chunks[1]
 
         with torch.no_grad():
             outputs = self.model(input_ids, attention_mask=attention_mask)
-            embeddings = outputs.last_hidden_state  # Shape: (num_chunks, seq_len, hidden_dim)
+            embeddings = outputs.last_hidden_state
 
-        # Mean pooling over the token dimension to get a single vector per chunk
         sentence_embedding = torch.mean(embeddings, dim=1)
-
         sentence_embedding = torch.mean(sentence_embedding, dim=0, keepdim=False)
 
         return sentence_embedding
+
+    def get_cache_stats(self) -> dict:
+        """Get cache performance statistics.
+
+        Returns:
+            Dictionary with cache hits, misses, and hit rate.
+        """
+        return self.cache.stats()

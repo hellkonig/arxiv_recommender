@@ -14,5 +14,8 @@ class AppConfig(BaseModel):
     favorite_papers_path: str = Field(description="Path to the favorite papers JSON file")
     vectorizer: VectorizerConfig = Field(description="Vectorizer configuration")
     top_k: int = Field(default=10, description="Number of top recommendations to return")
+    log_level: str = Field(
+        default="INFO", description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+    )
 
     model_config = {"frozen": True}

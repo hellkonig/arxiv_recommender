@@ -1,36 +1,36 @@
+from time import perf_counter
+
 import numpy as np
 from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
 from arxiv_recommender.schemas import Paper
+from arxiv_recommender.utils.metrics import MetricsCollector
 from ..text_vectorization import DistilBERTEmbedding
 
 
 class Recommender:
-    """
-    A content-based recommendation system for arXiv papers.
+    """A content-based recommendation system for arXiv papers.
 
     Attributes:
-        vectorizer (DistilBERTEmbedding): A text vectorization instance for
-            computing embeddings.
-        favorite_paper_embeddings (np.ndarray): Precomputed embeddings for
-            favorite papers.
+        vectorizer: A text vectorization instance for computing embeddings.
+        favorite_paper_embeddings: Precomputed embeddings for favorite papers.
+        metrics: Optional metrics collector for observability.
     """
 
     def __init__(
         self,
         vectorizer: DistilBERTEmbedding,
         favorite_papers: list[Paper],
+        metrics: MetricsCollector | None = None,
     ) -> None:
-        """
-        Initializes the recommender with a text vectorization model and
-        favorite paper metadata.
+        """Initializes the recommender with a text vectorization model.
 
         Args:
-            vectorizer (DistilBERTEmbedding): An instance of the text
-                vectorization class.
-            favorite_papers (list[Paper]): A list of favorite papers,
-                each containing "title" and "abstract".
+            vectorizer: An instance of the text vectorization class.
+            favorite_papers: A list of favorite papers, each containing
+                "title" and "abstract".
+            metrics: Optional metrics collector for tracking performance.
 
         Raises:
             ValueError: If no favorite papers are provided.
@@ -39,51 +39,53 @@ class Recommender:
             raise ValueError("At least one favorite paper must be provided.")
 
         self.vectorizer = vectorizer
+        self.metrics = metrics
         self.favorite_paper_embeddings = self._compute_favorite_embeddings(favorite_papers)
 
     def _compute_favorite_embeddings(self, papers: list[Paper]) -> np.ndarray:
-        """
-        Computes embeddings for the user's favorite papers.
+        """Computes embeddings for the user's favorite papers.
 
         Args:
-            papers (list[Paper]): A list of favorite papers, each
-                containing "title" and "abstract".
+            papers: A list of favorite papers, each containing
+                "title" and "abstract".
 
         Returns:
-            np.ndarray: An array of embeddings for the favorite papers.
+            An array of embeddings for the favorite papers.
         """
-        return np.array(
-            [self.vectorizer.process(paper.title + " " + paper.abstract) for paper in papers]
-        )
+        embeddings = []
+        for paper in papers:
+            start = perf_counter()
+            embedding = self.vectorizer.process(paper.title + " " + paper.abstract)
+            if self.metrics:
+                self.metrics.add_embedding_latency(perf_counter() - start)
+            embeddings.append(embedding)
+        return np.array(embeddings)
 
     def recommend_by_papers(
         self, candidate_papers: list[Paper], top_k: int | None = None
     ) -> list[dict[str, Any]]:
-        """
-        Recommends papers based on the highest similarity to the user's
-        favorite papers.
+        """Recommends papers based on the highest similarity to favorite papers.
 
         Args:
-            candidate_papers (list[Paper]): A list of candidate
-                papers, each containing "title" and "abstract".
-            top_k (Optional[int]): The number of top-ranked papers to
-                return. If not provided, returns all ranked papers.
+            candidate_papers: A list of candidate papers, each containing
+                "title" and "abstract".
+            top_k: The number of top-ranked papers to return. If not provided,
+                returns all ranked papers.
 
         Returns:
-            list[dict[str, Any]]: A ranked list of recommended papers,
-                sorted by highest similarity.
+            A ranked list of recommended papers, sorted by highest similarity.
         """
-
         if self.favorite_paper_embeddings.size == 0 or not candidate_papers:
             return []
 
-        # Compute embeddings for candidate papers
-        candidate_embeddings = np.array(
-            [
-                self.vectorizer.process(paper.title + " " + paper.abstract)
-                for paper in candidate_papers
-            ]
-        )
+        embedding_list = []
+        for paper in candidate_papers:
+            start = perf_counter()
+            embedding = self.vectorizer.process(paper.title + " " + paper.abstract)
+            if self.metrics:
+                self.metrics.add_embedding_latency(perf_counter() - start)
+            embedding_list.append(embedding)
+        candidate_embeddings = np.array(embedding_list)
 
         # Compute cosine similarity between favorite and candidate papers
         similarity_matrix = cosine_similarity(candidate_embeddings, self.favorite_paper_embeddings)
