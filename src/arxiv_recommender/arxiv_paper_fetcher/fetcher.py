@@ -39,7 +39,7 @@ class ArxivFetcher:
         Raises:
             requests.RequestException: If the API request fails.
         """
-        url = "%sid_list=%s" % (self.base_url, paper_id)
+        url = f"{self.base_url}id_list={paper_id}"
         response = requests.get(url, timeout=self.timeout)
         response.raise_for_status()
 
@@ -64,7 +64,7 @@ class ArxivFetcher:
         """
         query = format_arxiv_query(date, category, max_results=self.max_results)
         self._logger.info("Fetching daily papers with query: %s", query)
-        url = "%s%s&max_results=%s" % (self.base_url, query, self.max_results)
+        url = f"{self.base_url}{query}&max_results={self.max_results}"
 
         response = requests.get(url, timeout=self.timeout)
         response.raise_for_status()
