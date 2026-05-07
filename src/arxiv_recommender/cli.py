@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 
 from arxiv_recommender.schemas import AppConfig
@@ -7,7 +8,6 @@ from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 from arxiv_recommender.utils.paper_loader import load_favorite_papers
 from arxiv_recommender.utils.user_input import get_favorite_papers_from_user
-from arxiv_recommender.utils.logging import get_logger
 from arxiv_recommender.recommendation.recommendation import Recommender
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
@@ -61,7 +61,7 @@ def main() -> None:
 
     log_level = args.log_level or config.log_level
     setup_logging(level=log_level, json_format=True)
-    logger = get_logger(__name__)
+    logger = logging.getLogger(__name__)
 
     metrics = MetricsCollector()
 

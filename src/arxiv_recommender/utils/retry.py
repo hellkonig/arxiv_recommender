@@ -1,12 +1,11 @@
 """Retry decorator with exponential backoff for handling transient failures."""
 
+import logging
 import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
 import requests
-
-from arxiv_recommender.utils.logging import get_logger
 
 T = TypeVar("T")
 
@@ -30,7 +29,7 @@ def retry_with_backoff(
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        logger = get_logger(func.__module__)
+        logger = logging.getLogger(func.__module__)
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:

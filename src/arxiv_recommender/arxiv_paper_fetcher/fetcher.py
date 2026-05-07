@@ -1,11 +1,11 @@
 """Fetcher module for retrieving papers from arXiv API."""
 
+import logging
 import requests
 from typing import Optional
 
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.utils.retry import retry_with_backoff
-from arxiv_recommender.utils.logging import get_logger
 from .parser import parse_paper_info, parse_papers
 from .utils import format_arxiv_query
 
@@ -24,7 +24,7 @@ class ArxivFetcher:
         self.namespace = {"arxiv": "http://www.w3.org/2005/Atom"}
         self.max_results = max_results
         self.timeout = timeout
-        self._logger = get_logger(__name__)
+        self._logger = logging.getLogger(__name__)
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
     def get_paper_by_id(self, paper_id: str) -> Optional[Paper]:

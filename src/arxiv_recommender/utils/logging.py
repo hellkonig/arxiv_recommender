@@ -3,13 +3,12 @@
 This module provides:
 - JSONFormatter: Outputs log records as JSON for log aggregation systems
 - setup_logging(): Configures application-wide logging
-- get_logger(): Helper to get module-level loggers
 
 Usage:
-    from arxiv_recommender.utils.logging import setup_logging, get_logger
+    from arxiv_recommender.utils.logging import setup_logging
 
     setup_logging(level="INFO", json_format=True)
-    logger = get_logger(__name__)
+    logger = logging.getLogger(__name__)
     logger.info("Application started")
 """
 
@@ -90,16 +89,3 @@ def setup_logging(level: str = "INFO", json_format: bool = True) -> None:
 
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
-
-
-def get_logger(name: str) -> logging.Logger:
-    """Get a logger for a specific module.
-
-    Args:
-        name: The logger name. Use __name__ from the calling module for proper
-            hierarchy (e.g., "arxiv_recommender.fetcher").
-
-    Returns:
-        Logger instance configured with application-wide settings.
-    """
-    return logging.getLogger(name)

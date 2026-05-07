@@ -2,7 +2,7 @@ import json
 import logging
 import unittest
 
-from arxiv_recommender.utils.logging import JSONFormatter, get_logger, setup_logging
+from arxiv_recommender.utils.logging import JSONFormatter, setup_logging
 
 
 class TestJSONFormatter(unittest.TestCase):
@@ -68,18 +68,6 @@ class TestSetupLogging(unittest.TestCase):
         setup_logging(level="INFO", json_format=False)
         self.assertTrue(logging.getLogger("urllib3").level >= logging.WARNING)
         self.assertTrue(logging.getLogger("requests").level >= logging.WARNING)
-
-
-class TestGetLogger(unittest.TestCase):
-    def test_get_logger_returns_logger(self) -> None:
-        """Test that get_logger returns a logger instance."""
-        logger = get_logger("test_module")
-        self.assertIsInstance(logger, logging.Logger)
-
-    def test_get_logger_uses_provided_name(self) -> None:
-        """Test that get_logger uses the provided name."""
-        logger = get_logger("custom_logger_name")
-        self.assertEqual(logger.name, "custom_logger_name")
 
 
 if __name__ == "__main__":
