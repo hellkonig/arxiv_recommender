@@ -5,8 +5,8 @@ from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
 from arxiv_recommender.schemas import Paper
+from arxiv_recommender.text_vectorization import TextEmbedder
 from arxiv_recommender.utils.metrics import MetricsCollector
-from ..text_vectorization import DistilBERTEmbedding
 
 
 class Recommender:
@@ -20,7 +20,7 @@ class Recommender:
 
     def __init__(
         self,
-        vectorizer: DistilBERTEmbedding,
+        vectorizer: TextEmbedder,
         favorite_papers: list[Paper],
         metrics: MetricsCollector | None = None,
     ) -> None:

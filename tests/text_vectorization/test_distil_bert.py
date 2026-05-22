@@ -1,42 +1,25 @@
 import unittest
-from unittest.mock import patch, MagicMock
-import torch
-import numpy as np
+from typing import Any
+from unittest.mock import patch
 
 from arxiv_recommender.text_vectorization.distil_bert import DistilBERTEmbedding
+from arxiv_recommender.text_vectorization.huggingface_embed import HuggingFaceEmbedding
+from arxiv_recommender.text_vectorization import TextEmbedder
 
 
 class TestDistilBERTEmbedding(unittest.TestCase):
-    @patch("arxiv_recommender.text_vectorization.distil_bert.DistilBertModel.from_pretrained")
-    @patch("arxiv_recommender.text_vectorization.distil_bert.DistilBertTokenizer.from_pretrained")
-    def test_process_returns_expected_shape(
-        self, mock_tokenizer_from_pretrained, mock_model_from_pretrained
-    ):
-        # Mock the tokenizer
-        mock_tokenizer = MagicMock()
-        mock_tokenizer.return_value = {
-            "input_ids": torch.randint(0, 1000, (1, 512)),
-            "attention_mask": torch.ones(1, 512),
-        }
-        mock_tokenizer_from_pretrained.return_value = mock_tokenizer
-        # Mock the model
-        mock_model = MagicMock()
-        mock_output = MagicMock()
-        mock_output.last_hidden_state = torch.rand(1, 512, 768)  # (batch_size, seq_len, hidden_dim)
-        mock_model.return_value = mock_output
-        mock_model_from_pretrained.return_value = mock_model
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoTokenizer.from_pretrained")
+    def test_distilbert_embedding_is_backward_compatible_wrapper(
+        self, mock_tokenizer_from_pretrained: Any, mock_model_from_pretrained: Any
+    ) -> None:
+        embedder = DistilBERTEmbedding()
 
-        # Instantiate and run
-        embedder = DistilBERTEmbedding("distilbert-base-uncased")
-        embedding = embedder.process("This is a sample input text.")
-
-        # Assertions
-        self.assertIsInstance(embedding, np.ndarray)
-        self.assertEqual(embedding.shape, (768,))  # After mean pooling
-
-        # Ensure model/tokenizer were called correctly
-        mock_tokenizer_from_pretrained.assert_called_once()
-        mock_model_from_pretrained.assert_called_once()
+        self.assertIsInstance(embedder, TextEmbedder)
+        self.assertIsInstance(embedder, HuggingFaceEmbedding)
+        self.assertEqual(embedder.model_name, "distilbert-base-uncased")
+        mock_tokenizer_from_pretrained.assert_called_once_with("distilbert-base-uncased")
+        mock_model_from_pretrained.assert_called_once_with("distilbert-base-uncased")
 
 
 if __name__ == "__main__":

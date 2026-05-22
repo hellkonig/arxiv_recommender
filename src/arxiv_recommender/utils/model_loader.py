@@ -1,6 +1,7 @@
 import importlib
 import logging
-from typing import Any
+
+from arxiv_recommender.text_vectorization import TextEmbedder
 
 
 def load_vectorization_model(
@@ -8,7 +9,7 @@ def load_vectorization_model(
     class_name: str,
     model_name: str,
     cache_size: int,
-) -> Any:
+) -> TextEmbedder:
     """
     Dynamically loads a text vectorization model.
 
@@ -19,7 +20,7 @@ def load_vectorization_model(
         cache_size (int): Maximum number of embeddings to cache.
 
     Returns:
-        Type: The loaded model class.
+        Instantiated text embedder.
 
     Raises:
         ImportError: If the model class is not found.
@@ -27,7 +28,15 @@ def load_vectorization_model(
     try:
         module = importlib.import_module(f"arxiv_recommender.text_vectorization.{module_name}")
         model_class = getattr(module, class_name)
-        return model_class(model_name, cache_size=cache_size)
+        model = model_class(model_name, cache_size=cache_size)
+        if not isinstance(model, TextEmbedder):
+            logging.error(
+                "Invalid vectorization model '%s.%s': not a TextEmbedder",
+                module_name,
+                class_name,
+            )
+            raise ImportError(f"Model '{module_name}.{class_name}' is not a TextEmbedder.")
+        return model
     except (ModuleNotFoundError, AttributeError) as e:
-        logging.error(f"Failed to load vectorization model '{module_name}.{class_name}': {e}")
+        logging.error("Failed to load vectorization model '%s.%s': %s", module_name, class_name, e)
         raise ImportError(f"Model '{module_name}.{class_name}' not found.")
