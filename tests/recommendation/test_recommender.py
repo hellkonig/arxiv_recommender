@@ -1,18 +1,19 @@
 import unittest
-import numpy as np
 from unittest.mock import MagicMock
+
+import numpy as np
 
 from arxiv_recommender.recommendation.recommendation import Recommender
 from arxiv_recommender.schemas import Paper
-from arxiv_recommender.text_vectorization.distil_bert import DistilBERTEmbedding
+from arxiv_recommender.text_vectorization import TextEmbedder
 
 
 class TestRecommender(unittest.TestCase):
     """Unit tests for the Recommender class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Setup mock vectorizer and sample papers for testing."""
-        self.mock_vectorizer = MagicMock(spec=DistilBERTEmbedding)
+        self.mock_vectorizer = MagicMock(spec=TextEmbedder)
         self.mock_vectorizer.process.side_effect = lambda text: np.array([len(text)])
 
         self.favorite_papers = [
@@ -30,7 +31,7 @@ class TestRecommender(unittest.TestCase):
             vectorizer=self.mock_vectorizer, favorite_papers=self.favorite_papers
         )
 
-    def test_favorite_paper_embeddings_computed_correctly(self):
+    def test_favorite_paper_embeddings_computed_correctly(self) -> None:
         """Test if favorite paper embeddings are computed correctly."""
         expected_embeddings = np.array(
             [[len(p.title + " " + p.abstract)] for p in self.favorite_papers]
@@ -39,7 +40,7 @@ class TestRecommender(unittest.TestCase):
             self.recommender.favorite_paper_embeddings, expected_embeddings
         )
 
-    def test_recommend_by_papers_with_valid_candidates(self):
+    def test_recommend_by_papers_with_valid_candidates(self) -> None:
         """Test if recommendations are correctly ranked by similarity."""
         recommendations = self.recommender.recommend_by_papers(self.candidate_papers)
 
@@ -49,20 +50,20 @@ class TestRecommender(unittest.TestCase):
             sorted(recommendations, key=lambda x: x["score"], reverse=True), recommendations
         )
 
-    def test_recommend_by_papers_with_top_k(self):
+    def test_recommend_by_papers_with_top_k(self) -> None:
         """Test if top_k parameter limits the results correctly."""
         recommendations = self.recommender.recommend_by_papers(self.candidate_papers, top_k=2)
         self.assertEqual(len(recommendations), 2)
 
-    def test_recommend_by_papers_with_empty_candidates(self):
+    def test_recommend_by_papers_with_empty_candidates(self) -> None:
         """Test behavior when no candidate papers are provided."""
         recommendations = self.recommender.recommend_by_papers([])
         self.assertEqual(recommendations, [])
 
-    def test_init_raises_error_if_no_favorites(self):
+    def test_init_raises_error_if_no_favorites(self) -> None:
         """Test that an error is raised when no favorite papers are provided."""
         with self.assertRaises(ValueError):
-            Recommender(vectorizer=self.mock_vectorizer, favorite_papers=None)
+            Recommender(vectorizer=self.mock_vectorizer, favorite_papers=None)  # type: ignore[arg-type]
 
         with self.assertRaises(ValueError):
             Recommender(vectorizer=self.mock_vectorizer, favorite_papers=[])
