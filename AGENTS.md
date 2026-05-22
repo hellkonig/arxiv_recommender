@@ -33,6 +33,7 @@ arxiv_recommender/
 - **Type hints (Python 3.10+)**: Use `X | None` instead of `Optional[X]`
 - Classes: PascalCase, Functions: snake_case
 - Google-style docstrings for public methods
+- Before making any file edits, present the proposed diff and wait for explicit user approval.
 
 ## Three-Tier Boundaries
 | Always | Ask First | Never |
