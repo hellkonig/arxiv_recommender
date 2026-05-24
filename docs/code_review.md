@@ -2,6 +2,10 @@
 
 Objective review of the current `arxiv_recommender` codebase, focused on correctness, maintainability, ML quality, testing, and operational readiness.
 
+- Reviewed on: 2026-05-25
+- Scope: current codebase snapshot
+- Context: local CLI or localhost app priority
+
 This document is a review snapshot, not a final verdict. Priority should follow the immediate product goal. If the next target is a usable local CLI application or a localhost web app, end-to-end reliability and retrieval quality should come before scalability work.
 
 ## Current Verification Status
