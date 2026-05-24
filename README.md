@@ -1,6 +1,6 @@
 # arXiv Recommender
 
-`arxiv_recommender` is a content-based recommendation system that helps researchers discover relevant papers from arXiv. Given a set of favorite papers, it retrieves the most relevant ones using state-of-the-art NLP models.
+`arxiv_recommender` is a content-based recommendation system that helps researchers discover relevant papers from arXiv. Given a set of favorite papers, it fetches candidate papers from arXiv and ranks them using configurable HuggingFace text embeddings.
 
 ## Project Structure
 
@@ -10,6 +10,7 @@ arxiv_recommender/
 │   └── arxiv_recommender/           # Python package
 │       ├── cli.py                    # CLI entry point
 │       ├── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
+│       ├── favorite_papers/           # Loads favorite papers from files or prompts
 │       ├── text_vectorization/       # Handles text embedding models
 │       ├── recommendation/           # Core recommendation logic
 │       ├── schemas/                  # Pydantic models
@@ -28,7 +29,7 @@ arxiv_recommender/
 ```bash
 git clone https://github.com/your-repo/arxiv_recommender.git
 cd arxiv_recommender
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 ### 2. Create Configuration
@@ -47,11 +48,13 @@ Edit `configs/config.json`:
 {
     "favorite_papers_path": "favorite_papers.json",
     "vectorizer": {
-        "module_name": "distil_bert",
-        "class_name": "DistilBERTEmbedding",
-        "model_name": "distilbert-base-uncased"
+        "module_name": "huggingface_embed",
+        "class_name": "HuggingFaceEmbedding",
+        "model_name": "distilbert-base-uncased",
+        "cache_size": 1000
     },
-    "top_k": 10
+    "top_k": 10,
+    "log_level": "INFO"
 }
 ```
 
@@ -61,7 +64,9 @@ Edit `configs/config.json`:
 | `vectorizer.module_name` | Module name for vectorizer |
 | `vectorizer.class_name` | Class name for vectorizer |
 | `vectorizer.model_name` | Model name or local path |
+| `vectorizer.cache_size` | Maximum number of embeddings to cache |
 | `top_k` | Number of recommended papers |
+| `log_level` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`) |
 
 ## Custom Models
 
@@ -97,8 +102,7 @@ arxiv-recommend --config configs/config.json
 ### Option 2: Running from Source
 
 ```bash
-pip install -e .
-python -m arxiv_recommender.cli --config configs/config.json
+uv run python -m arxiv_recommender.cli --config configs/config.json
 ```
 
 ### Options
@@ -107,14 +111,15 @@ python -m arxiv_recommender.cli --config configs/config.json
 |------|-------------|
 | `--config` | Path to configuration JSON file (required) |
 | `--date_of_pulling_papers` | Date in YYYYMMDD format (optional, defaults to today) |
+| `--log-level` | Override configured log level |
+| `--stats` | Print a metrics summary at the end of execution |
 
 If `favorite_papers.json` is missing or empty, the CLI will prompt you to enter arXiv paper IDs.
 
 ## Testing
 
 ```bash
-pip install -e ".[test]"
-python -m pytest
+uv run python -m pytest
 ```
 
 ## License

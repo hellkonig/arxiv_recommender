@@ -1,7 +1,7 @@
 # AGENTS.md - Project Configuration
 
 ## Project Overview
-Content-based arXiv paper recommender system using DistilBERT embeddings.
+Content-based arXiv paper recommender system using configurable HuggingFace embeddings.
 
 ## Commands
 ```bash
@@ -10,21 +10,23 @@ uv run ruff check .                 # Run linting (uv)
 uv run ruff format --check .        # Run formatting check (uv)
 uv run python -m mypy src           # Run type checking (uv)
 uv run python -m pytest tests/path/to/test_file.py::TestClass::test_method  # Single test
-python3 -m arxiv_recommender.cli --config path/to/config.json   # Run CLI
+uv run python -m arxiv_recommender.cli --config path/to/config.json   # Run CLI
 pre-commit run                      # Run all local checks (lint + format + mypy)
 ```
 
 ## Project Structure
 ```
 arxiv_recommender/
-├── arxiv_recommender/
-│   ├── recommendation/         # Core recommendation logic
-│   ├── text_vectorization/    # Embedding models (DistilBERT)
-│   ├── arxiv_paper_fetcher/  # arXiv API client
-│   ├── schemas/              # Pydantic models (NEW)
-│   └── utils/                # Utilities
+├── src/
+│   └── arxiv_recommender/
+│       ├── recommendation/        # Core recommendation logic
+│       ├── text_vectorization/    # Embedding models
+│       ├── arxiv_paper_fetcher/   # arXiv API client
+│       ├── favorite_papers/       # Favorite paper loading and prompting
+│       ├── schemas/               # Pydantic models
+│       └── utils/                 # Utilities
 ├── tests/                    # Test suite
-└── cli.py                   # CLI entry point
+└── pyproject.toml            # Project configuration
 ```
 
 ## Conventions
