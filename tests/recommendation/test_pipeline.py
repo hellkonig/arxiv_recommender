@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.favorite_papers import FavoritePapersProvider
 from arxiv_recommender.recommendation import RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 from arxiv_recommender.text_vectorization import TextEmbedder
@@ -42,8 +43,8 @@ class TestRecommendationPipeline(unittest.TestCase):
             "size": 2,
         }
         self.metrics = MetricsCollector()
-        self.favorite_loader = MagicMock(return_value=self.favorite_papers)
-        self.favorite_prompt = MagicMock(return_value=self.favorite_papers)
+        self.favorite_papers_provider = MagicMock(spec=FavoritePapersProvider)
+        self.favorite_papers_provider.get_papers.return_value = self.favorite_papers
 
     def _create_pipeline(self) -> RecommendationPipeline:
         return RecommendationPipeline(
@@ -51,29 +52,23 @@ class TestRecommendationPipeline(unittest.TestCase):
             fetcher=self.mock_fetcher,
             vectorizer=self.mock_vectorizer,
             metrics=self.metrics,
-            favorite_papers_loader=self.favorite_loader,
-            favorite_papers_prompt=self.favorite_prompt,
+            favorite_papers_provider=self.favorite_papers_provider,
         )
 
-    def test_run_uses_existing_favorite_papers(self) -> None:
+    def test_run_uses_provider_favorite_papers(self) -> None:
         pipeline = self._create_pipeline()
 
         result = pipeline.run()
 
-        self.favorite_loader.assert_called_once_with(self.config.favorite_papers_path)
-        self.favorite_prompt.assert_not_called()
+        self.favorite_papers_provider.get_papers.assert_called_once_with()
         self.assertEqual(result.favorite_papers_count, 2)
 
-    def test_run_prompts_when_favorite_papers_are_empty(self) -> None:
-        self.favorite_loader.return_value = []
+    def test_run_raises_if_provider_returns_empty_papers(self) -> None:
+        self.favorite_papers_provider.get_papers.return_value = []
         pipeline = self._create_pipeline()
 
-        result = pipeline.run()
-
-        self.favorite_prompt.assert_called_once_with(
-            self.config.favorite_papers_path, self.mock_fetcher
-        )
-        self.assertEqual(result.favorite_papers_count, 2)
+        with self.assertRaises(ValueError):
+            pipeline.run()
 
     def test_run_respects_top_k(self) -> None:
         pipeline = self._create_pipeline()

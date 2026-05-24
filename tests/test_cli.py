@@ -33,10 +33,18 @@ class TestCli(unittest.TestCase):
     @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
     @patch("arxiv_recommender.cli.load_config")
     @patch("arxiv_recommender.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.cli.MetricsCollector")
+    @patch("arxiv_recommender.cli.load_vectorization_model")
+    @patch("arxiv_recommender.cli.ArxivFetcher")
     @patch("arxiv_recommender.cli.setup_logging")
     def test_main_delegates_to_pipeline(
         self,
         mock_setup_logging: MagicMock,
+        mock_fetcher_class: MagicMock,
+        mock_load_vectorization_model: MagicMock,
+        mock_metrics_class: MagicMock,
+        mock_provider_class: MagicMock,
         mock_pipeline_class: MagicMock,
         mock_load_config: MagicMock,
         mock_parse_args: MagicMock,
@@ -54,18 +62,42 @@ class TestCli(unittest.TestCase):
         cli.main()
 
         mock_setup_logging.assert_called_once_with(level="INFO", json_format=True)
-        mock_pipeline_class.assert_called_once_with(config=self.config)
+        mock_load_vectorization_model.assert_called_once_with(
+            module_name=self.config.vectorizer.module_name,
+            class_name=self.config.vectorizer.class_name,
+            model_name=self.config.vectorizer.model_name,
+            cache_size=self.config.vectorizer.cache_size,
+        )
+        mock_provider_class.assert_called_once_with(
+            favorite_papers_path=self.config.favorite_papers_path,
+            fetcher=mock_fetcher_class.return_value,
+        )
+        mock_pipeline_class.assert_called_once_with(
+            config=self.config,
+            fetcher=mock_fetcher_class.return_value,
+            vectorizer=mock_load_vectorization_model.return_value,
+            metrics=mock_metrics_class.return_value,
+            favorite_papers_provider=mock_provider_class.return_value,
+        )
         mock_pipeline.run.assert_called_once_with(date_of_pulling_papers="20260522")
 
     @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
     @patch("arxiv_recommender.cli.load_config")
     @patch("arxiv_recommender.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.cli.MetricsCollector")
+    @patch("arxiv_recommender.cli.load_vectorization_model")
+    @patch("arxiv_recommender.cli.ArxivFetcher")
     @patch("arxiv_recommender.cli.setup_logging")
     @patch("arxiv_recommender.cli.logging.getLogger")
     def test_main_logs_metrics_when_stats_enabled(
         self,
         mock_get_logger: MagicMock,
         mock_setup_logging: MagicMock,
+        mock_fetcher_class: MagicMock,
+        mock_load_vectorization_model: MagicMock,
+        mock_metrics_class: MagicMock,
+        mock_provider_class: MagicMock,
         mock_pipeline_class: MagicMock,
         mock_load_config: MagicMock,
         mock_parse_args: MagicMock,
@@ -84,14 +116,26 @@ class TestCli(unittest.TestCase):
 
         mock_setup_logging.assert_called_once_with(level="INFO", json_format=True)
         mock_logger.info.assert_any_call("Metrics summary: %s", self.result.metrics_summary)
+        mock_fetcher_class.assert_called_once()
+        mock_load_vectorization_model.assert_called_once()
+        mock_metrics_class.assert_called_once()
+        mock_provider_class.assert_called_once()
 
     @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
     @patch("arxiv_recommender.cli.load_config")
     @patch("arxiv_recommender.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.cli.MetricsCollector")
+    @patch("arxiv_recommender.cli.load_vectorization_model")
+    @patch("arxiv_recommender.cli.ArxivFetcher")
     @patch("arxiv_recommender.cli.setup_logging")
     def test_main_uses_log_level_override(
         self,
         mock_setup_logging: MagicMock,
+        mock_fetcher_class: MagicMock,
+        mock_load_vectorization_model: MagicMock,
+        mock_metrics_class: MagicMock,
+        mock_provider_class: MagicMock,
         mock_pipeline_class: MagicMock,
         mock_load_config: MagicMock,
         mock_parse_args: MagicMock,
@@ -108,6 +152,10 @@ class TestCli(unittest.TestCase):
         cli.main()
 
         mock_setup_logging.assert_called_once_with(level="DEBUG", json_format=True)
+        mock_fetcher_class.assert_called_once()
+        mock_load_vectorization_model.assert_called_once()
+        mock_metrics_class.assert_called_once()
+        mock_provider_class.assert_called_once()
 
 
 if __name__ == "__main__":

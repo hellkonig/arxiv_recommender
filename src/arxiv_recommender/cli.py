@@ -2,10 +2,13 @@ import argparse
 import logging
 import os
 
+from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.favorite_papers import FileFavoritePapersProvider
 from arxiv_recommender.recommendation import RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig
-from arxiv_recommender.utils import setup_logging
+from arxiv_recommender.utils import MetricsCollector, setup_logging
 from arxiv_recommender.utils.json_handler import load_json
+from arxiv_recommender.utils.model_loader import load_vectorization_model
 
 
 def load_config(config_path: str) -> AppConfig:
@@ -59,7 +62,25 @@ def main() -> None:
     setup_logging(level=log_level, json_format=True)
     logger = logging.getLogger(__name__)
 
-    pipeline = RecommendationPipeline(config=config)
+    fetcher = ArxivFetcher()
+    vectorizer = load_vectorization_model(
+        module_name=config.vectorizer.module_name,
+        class_name=config.vectorizer.class_name,
+        model_name=config.vectorizer.model_name,
+        cache_size=config.vectorizer.cache_size,
+    )
+    metrics = MetricsCollector()
+    favorite_papers_provider = FileFavoritePapersProvider(
+        favorite_papers_path=config.favorite_papers_path,
+        fetcher=fetcher,
+    )
+    pipeline = RecommendationPipeline(
+        config=config,
+        fetcher=fetcher,
+        vectorizer=vectorizer,
+        metrics=metrics,
+        favorite_papers_provider=favorite_papers_provider,
+    )
     result = pipeline.run(date_of_pulling_papers=args.date_of_pulling_papers)
 
     logger.info("Top recommended papers:")

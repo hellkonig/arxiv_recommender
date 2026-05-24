@@ -1,8 +1,8 @@
 import logging
 
+from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.utils.json_handler import save_json
-from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 
 
 def get_favorite_papers_from_user(output_file: str, fetcher: ArxivFetcher) -> list[Paper]:
