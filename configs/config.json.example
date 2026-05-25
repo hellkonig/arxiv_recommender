@@ -1,0 +1,11 @@
+{
+    "favorite_papers_path": "favorite_papers.json",
+    "vectorizer": {
+        "module_name": "huggingface_embed",
+        "class_name": "HuggingFaceEmbedding",
+        "model_name": "distilbert-base-uncased",
+        "cache_size": 1000
+    },
+    "top_k": 10,
+    "log_level": "INFO"
+}
