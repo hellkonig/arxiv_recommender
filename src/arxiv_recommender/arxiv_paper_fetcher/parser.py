@@ -5,6 +5,10 @@ from arxiv_recommender.arxiv_paper_fetcher.utils import remove_control_character
 from arxiv_recommender.schemas import Paper
 
 
+class ArxivParseError(ValueError):
+    """Raised when an arXiv API response cannot be parsed as valid XML."""
+
+
 def extract_metadata(entry: ET.Element) -> Paper:
     """
     Extracts paper's meta data from a single XML entry.
@@ -52,8 +56,8 @@ def parse_paper_info(xml_data: str) -> Optional[Paper]:
         if entry is None:
             return None
         return extract_metadata(entry)
-    except ET.ParseError:
-        return None
+    except ET.ParseError as exc:
+        raise ArxivParseError("Malformed arXiv XML response.") from exc
 
 
 def parse_papers(xml_data: str) -> list[Paper]:
@@ -73,7 +77,7 @@ def parse_papers(xml_data: str) -> list[Paper]:
             if entry is None:
                 continue
             papers.append(extract_metadata(entry))
-    except ET.ParseError:
-        pass
+    except ET.ParseError as exc:
+        raise ArxivParseError("Malformed arXiv XML response.") from exc
 
     return papers
