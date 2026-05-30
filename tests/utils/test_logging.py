@@ -2,7 +2,7 @@ import json
 import logging
 import unittest
 
-from arxiv_recommender.utils.logging import JSONFormatter, setup_logging
+from arxiv_recommender.utils.logging import JSONFormatter, SUPPORTED_LOG_LEVELS, setup_logging
 
 
 class TestJSONFormatter(unittest.TestCase):
@@ -68,6 +68,18 @@ class TestSetupLogging(unittest.TestCase):
         setup_logging(level="INFO", json_format=False)
         self.assertTrue(logging.getLogger("urllib3").level >= logging.WARNING)
         self.assertTrue(logging.getLogger("requests").level >= logging.WARNING)
+
+    def test_setup_logging_rejects_invalid_level(self) -> None:
+        """Test that unsupported log levels raise a clear error."""
+        with self.assertRaises(ValueError):
+            setup_logging(level="LOUD", json_format=False)
+
+    def test_supported_log_levels_are_ordered(self) -> None:
+        """Test supported log levels remain deterministic for CLI choices and messages."""
+        self.assertEqual(
+            SUPPORTED_LOG_LEVELS,
+            ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
+        )
 
 
 if __name__ == "__main__":
