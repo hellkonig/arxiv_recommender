@@ -3,6 +3,7 @@
 Objective review of the current `arxiv_recommender` codebase, focused on correctness, maintainability, ML quality, testing, and operational readiness.
 
 - Reviewed on: 2026-05-25
+- Updated on: 2026-05-31 after PR #30
 - Scope: current codebase snapshot
 - Context: local CLI or localhost app priority
 
@@ -13,7 +14,7 @@ This document is a review snapshot, not a final verdict. Priority should follow 
 - `uv run ruff check .`: passed.
 - `uv run ruff format --check .`: passed.
 - `uv run python -m mypy src`: passed.
-- `uv run python -m pytest`: passed, 82 tests.
+- `uv run python -m pytest`: passed, 100 tests.
 
 ## Priority Findings
 
@@ -52,20 +53,24 @@ Relevant code:
 - `src/arxiv_recommender/text_vectorization/base.py`
 - `src/arxiv_recommender/text_vectorization/huggingface_embed.py`
 
-### High: Fetcher Tests Contain False Positives
+### Resolved: Fetcher Tests Contained False Positives
 
 `ArxivFetcher` calls `response.raise_for_status()`, so real HTTP 404 responses should raise. Some tests expect `None` because the mock response does not configure `raise_for_status`, which means the test does not reflect production behavior.
 
-Recommended improvements:
+Status:
 
-- Configure mocked responses with realistic `raise_for_status` behavior.
-- Decide whether 404 should raise or return `None`, then encode that behavior explicitly.
-- Add tests for HTTP errors, malformed XML, empty feeds, and retry behavior.
+- Resolved by PR #29, `fix: clarify arxiv fetcher error semantics`.
+- Mocked responses now configure `raise_for_status` explicitly.
+- HTTP failures raise `requests` exceptions after retry behavior is applied.
+- Valid empty feeds remain distinct from failures: `get_paper_by_id()` returns `None`, and `get_daily_papers()` returns `[]`.
+- Malformed arXiv XML now raises `ArxivParseError` instead of being treated as an empty result.
 
 Relevant code:
 
 - `src/arxiv_recommender/arxiv_paper_fetcher/fetcher.py`
+- `src/arxiv_recommender/arxiv_paper_fetcher/parser.py`
 - `tests/arxiv_paper_fetcher/test_fetcher.py`
+- `tests/arxiv_paper_fetcher/test_parser.py`
 
 ### Medium: Metrics Are Partially Unwired
 
@@ -104,20 +109,31 @@ Relevant code:
 
 ### Medium: Config Validation Is Too Permissive
 
-Pydantic models are used, but they do not yet enforce important domain constraints. Invalid values such as empty model names, negative `top_k`, invalid cache size, or invalid log levels can pass validation.
+Pydantic models are used, and PR #30 tightened deterministic scalar constraints while adding runtime validation for environment-dependent vectorizer settings.
 
-Recommended improvements:
+Status:
 
-- Enforce `top_k > 0`.
-- Enforce `cache_size >= 0` or `cache_size > 0`, depending on desired behavior.
-- Restrict `log_level` to known logging levels.
-- Reject empty module/class/model names.
-- Add tests for invalid config values.
+- Partially addressed by PR #30, `fix: validate configuration and vectorizer loading`.
+- `top_k > 0` is enforced.
+- `cache_size >= 0` is enforced, allowing zero to disable caching.
+- `log_level` is normalized and restricted to known logging levels.
+- CLI log-level choices and logging setup reuse the same supported-level constant.
+- Invalid vectorizer modules, classes, dependencies, and model-instantiation failures now raise actionable `VectorizationModelLoadError` messages.
+
+Design decision:
+
+- `module_name`, `class_name`, and `model_name` are validated when the vectorizer is loaded instead of using schema-level non-empty-string checks.
+- Non-empty-string checks would reject only one trivial failure mode while arbitrary invalid names would still fail later.
+- Runtime validation can distinguish missing modules, missing classes, missing dependencies, and model-instantiation failures and return actionable errors.
 
 Relevant code:
 
 - `src/arxiv_recommender/schemas/config.py`
+- `src/arxiv_recommender/utils/logging.py`
+- `src/arxiv_recommender/utils/model_loader.py`
 - `tests/schemas/test_config.py`
+- `tests/utils/test_logging.py`
+- `tests/utils/test_model_loader.py`
 
 ### Medium: arXiv Query Construction Is Brittle
 
@@ -158,10 +174,10 @@ Relevant files:
 
 The following order is recommended if the immediate goal is a usable local CLI app or a web app served on `localhost`.
 
-1. Fix fetcher test realism and clarify HTTP error behavior.
-2. Tighten Pydantic validation for config and paper data.
-3. Add structured paper identity fields and recommendation output models.
-4. Add a lightweight retrieval quality evaluation harness.
+1. Add structured paper identity fields and recommendation output models.
+2. Complete remaining schema validation for paper data and request inputs.
+3. Add a lightweight retrieval quality evaluation harness.
+4. Improve CLI error reporting for fetcher and parser failures.
 5. Improve the CLI workflow or build a thin localhost web UI.
 6. Wire metrics fully or simplify them to only report trustworthy values.
 7. Add batch embedding support and benchmark latency.
