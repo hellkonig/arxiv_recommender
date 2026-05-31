@@ -8,6 +8,7 @@ from arxiv_recommender.recommendation import RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig
 from arxiv_recommender.utils import MetricsCollector, setup_logging
 from arxiv_recommender.utils.json_handler import load_json
+from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 
 
@@ -45,9 +46,10 @@ def main() -> None:
     )
     parser.add_argument(
         "--log-level",
-        type=str,
+        type=str.upper,
+        choices=SUPPORTED_LOG_LEVELS,
         default=None,
-        help="Override log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).",
+        help=f"Override log level ({', '.join(SUPPORTED_LOG_LEVELS)}).",
     )
     parser.add_argument(
         "--stats",

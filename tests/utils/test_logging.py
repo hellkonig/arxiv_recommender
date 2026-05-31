@@ -69,6 +69,11 @@ class TestSetupLogging(unittest.TestCase):
         self.assertTrue(logging.getLogger("urllib3").level >= logging.WARNING)
         self.assertTrue(logging.getLogger("requests").level >= logging.WARNING)
 
+    def test_setup_logging_rejects_invalid_level(self) -> None:
+        """Test that unsupported log levels raise a clear error."""
+        with self.assertRaises(ValueError):
+            setup_logging(level="LOUD", json_format=False)
+
 
 if __name__ == "__main__":
     unittest.main()

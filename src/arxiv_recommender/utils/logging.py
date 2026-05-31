@@ -16,6 +16,10 @@ import json
 import logging
 import sys
 from datetime import datetime, timezone
+from typing import Final
+
+
+SUPPORTED_LOG_LEVELS: Final = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
 
 class JSONFormatter(logging.Formatter):
@@ -73,7 +77,13 @@ def setup_logging(level: str = "INFO", json_format: bool = True) -> None:
             If False, output human-readable format (for development).
             Default is True.
     """
-    log_level = getattr(logging, level.upper(), logging.INFO)
+    normalized_level = level.upper()
+    if normalized_level not in SUPPORTED_LOG_LEVELS:
+        raise ValueError(
+            f"Unsupported log level '{level}'. Expected one of: {', '.join(SUPPORTED_LOG_LEVELS)}."
+        )
+
+    log_level = getattr(logging, normalized_level)
     handler = logging.StreamHandler(sys.stdout)
 
     if json_format:
