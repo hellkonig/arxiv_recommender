@@ -14,8 +14,15 @@ class TestParser(unittest.TestCase):
         self.sample_entry = """
         <feed xmlns="http://www.w3.org/2005/Atom">
             <entry>
+                <id>http://arxiv.org/abs/1234.56789</id>
                 <title>Sample Paper</title>
                 <summary>Sample Abstract</summary>
+                <author><name>Ada Lovelace</name></author>
+                <author><name>Grace Hopper</name></author>
+                <category term="cs.AI"/>
+                <category term="cs.LG"/>
+                <published>2026-05-01T12:00:00Z</published>
+                <updated>2026-05-02T12:00:00Z</updated>
             </entry>
         </feed>
         """
@@ -39,8 +46,16 @@ class TestParser(unittest.TestCase):
         entry = root.find("{http://www.w3.org/2005/Atom}entry")
         assert entry is not None
         metadata = extract_metadata(entry)
+        self.assertEqual(metadata.arxiv_id, "1234.56789")
+        self.assertEqual(metadata.url, "http://arxiv.org/abs/1234.56789")
         self.assertEqual(metadata.title, "Sample Paper")
         self.assertEqual(metadata.abstract, "Sample Abstract")
+        self.assertEqual(metadata.authors, ["Ada Lovelace", "Grace Hopper"])
+        self.assertEqual(metadata.categories, ["cs.AI", "cs.LG"])
+        assert metadata.published is not None
+        assert metadata.updated is not None
+        self.assertEqual(metadata.published.isoformat(), "2026-05-01T12:00:00+00:00")
+        self.assertEqual(metadata.updated.isoformat(), "2026-05-02T12:00:00+00:00")
 
     def test_parse_paper_info(self) -> None:
         """Test extracting title and abstract from a single entry"""

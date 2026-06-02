@@ -3,8 +3,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from arxiv_recommender import cli
-from arxiv_recommender.recommendation.types import RecommendationRunResult
-from arxiv_recommender.schemas import AppConfig, VectorizerConfig
+from arxiv_recommender.recommendation.types import RecommendationItem, RecommendationRunResult
+from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 
 
 class TestCli(unittest.TestCase):
@@ -22,8 +22,19 @@ class TestCli(unittest.TestCase):
         )
         self.result = RecommendationRunResult(
             recommendations=[
-                {"title": "Paper 1", "abstract": "Abstract 1", "score": 0.9},
-                {"title": "Paper 2", "abstract": "Abstract 2", "score": 0.8},
+                RecommendationItem(
+                    paper=Paper(
+                        arxiv_id="1234.56789",
+                        url="http://arxiv.org/abs/1234.56789",
+                        title="Paper 1",
+                        abstract="Abstract 1",
+                    ),
+                    score=0.9,
+                ),
+                RecommendationItem(
+                    paper=Paper(title="Paper 2", abstract="Abstract 2"),
+                    score=0.8,
+                ),
             ],
             metrics_summary={"cache": {"hits": 1}},
             favorite_papers_count=2,
@@ -116,6 +127,13 @@ class TestCli(unittest.TestCase):
 
         mock_setup_logging.assert_called_once_with(level="INFO", json_format=True)
         mock_logger.info.assert_any_call("Metrics summary: %s", self.result.metrics_summary)
+        mock_logger.info.assert_any_call(
+            "%d. %s (%s) [%s]",
+            1,
+            "Paper 1",
+            "Abstract 1",
+            "http://arxiv.org/abs/1234.56789",
+        )
         mock_fetcher_class.assert_called_once()
         mock_load_vectorization_model.assert_called_once()
         mock_metrics_class.assert_called_once()

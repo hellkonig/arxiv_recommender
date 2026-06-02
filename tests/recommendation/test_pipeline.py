@@ -28,7 +28,12 @@ class TestRecommendationPipeline(unittest.TestCase):
             Paper(title="Favorite 2", abstract="About neural networks."),
         ]
         self.daily_papers = [
-            Paper(title="Candidate 1", abstract="About transformers."),
+            Paper(
+                arxiv_id="1234.56789",
+                url="http://arxiv.org/abs/1234.56789",
+                title="Candidate 1",
+                abstract="About transformers.",
+            ),
             Paper(title="Candidate 2", abstract="About optimization."),
             Paper(title="Candidate 3", abstract="About statistics."),
         ]
@@ -76,6 +81,16 @@ class TestRecommendationPipeline(unittest.TestCase):
         result = pipeline.run()
 
         self.assertEqual(len(result.recommendations), self.config.top_k)
+
+    def test_run_preserves_recommendation_metadata(self) -> None:
+        pipeline = self._create_pipeline()
+
+        result = pipeline.run()
+
+        metadata_recommendation = next(
+            item for item in result.recommendations if item.paper.arxiv_id == "1234.56789"
+        )
+        self.assertEqual(metadata_recommendation.paper, self.daily_papers[0])
 
     def test_run_returns_empty_recommendations_for_empty_daily_papers(self) -> None:
         self.mock_fetcher.get_daily_papers.return_value = []

@@ -1,12 +1,36 @@
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from typing import Optional
 
 from arxiv_recommender.arxiv_paper_fetcher.utils import remove_control_characters
 from arxiv_recommender.schemas import Paper
 
+ATOM_NAMESPACE = "{http://www.w3.org/2005/Atom}"
+
 
 class ArxivParseError(ValueError):
     """Raised when an arXiv API response cannot be parsed as valid XML."""
+
+
+def _get_text(entry: ET.Element, field: str) -> str:
+    """Return normalized text for an Atom child element."""
+    element = entry.find(f"{ATOM_NAMESPACE}{field}")
+    return (
+        remove_control_characters(element.text.strip())
+        if element is not None and element.text
+        else ""
+    )
+
+
+def _extract_arxiv_id(url: str) -> str:
+    """Extract an arXiv identifier from the canonical entry URL."""
+    return url.rsplit("/abs/", maxsplit=1)[-1]
+
+
+def _get_datetime(entry: ET.Element, field: str) -> datetime | None:
+    """Return an Atom timestamp as a datetime when present."""
+    value = _get_text(entry, field)
+    return datetime.fromisoformat(value) if value else None
 
 
 def extract_metadata(entry: ET.Element) -> Paper:
@@ -17,27 +41,35 @@ def extract_metadata(entry: ET.Element) -> Paper:
         entry (ET.Element): An XML element representing a paper entry.
 
     Returns:
-        Paper: A Paper object containing 'title' and 'abstract'.
+        Paper: A Paper object containing the available arXiv metadata.
     """
-    title_elem = entry.find("{http://www.w3.org/2005/Atom}title")
-    summary_elem = entry.find("{http://www.w3.org/2005/Atom}summary")
-    title = (
-        remove_control_characters(title_elem.text.strip())
-        if title_elem is not None and title_elem.text
-        else ""
-    )
-    abstract = (
-        remove_control_characters(summary_elem.text.strip())
-        if summary_elem is not None and summary_elem.text
-        else ""
-    )
+    url = _get_text(entry, "id")
+    title = _get_text(entry, "title")
+    abstract = _get_text(entry, "summary")
+    authors = [
+        name
+        for author in entry.findall(f"{ATOM_NAMESPACE}author")
+        if (name := _get_text(author, "name"))
+    ]
+    categories = [
+        term
+        for category in entry.findall(f"{ATOM_NAMESPACE}category")
+        if (term := category.get("term"))
+    ]
 
     if not title or not abstract:
         raise ValueError("Title or abstract is empty in the entry.")
-    if not isinstance(title, str) or not isinstance(abstract, str):
-        raise TypeError("Title or abstract is not a string in the entry.")
 
-    return Paper(title=title, abstract=abstract)
+    return Paper(
+        arxiv_id=_extract_arxiv_id(url) if url else None,
+        url=url or None,
+        title=title,
+        abstract=abstract,
+        authors=authors,
+        categories=categories,
+        published=_get_datetime(entry, "published"),
+        updated=_get_datetime(entry, "updated"),
+    )
 
 
 def parse_paper_info(xml_data: str) -> Optional[Paper]:
@@ -48,11 +80,11 @@ def parse_paper_info(xml_data: str) -> Optional[Paper]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        Optional[Paper]: A Paper object containing 'title' and 'abstract' if successful, else None.
+        Optional[Paper]: A Paper object containing available metadata if successful, else None.
     """
     try:
         root = ET.fromstring(xml_data)
-        entry = root.find("{http://www.w3.org/2005/Atom}entry")
+        entry = root.find(f"{ATOM_NAMESPACE}entry")
         if entry is None:
             return None
         return extract_metadata(entry)
@@ -68,12 +100,12 @@ def parse_papers(xml_data: str) -> list[Paper]:
         xml_data (str): The XML response from arXiv API.
 
     Returns:
-        list[Paper]: A list of Paper objects, each containing 'title' and 'abstract'.
+        list[Paper]: A list of Paper objects containing available metadata.
     """
     papers = []
     try:
         root = ET.fromstring(xml_data)
-        for entry in root.findall("{http://www.w3.org/2005/Atom}entry"):
+        for entry in root.findall(f"{ATOM_NAMESPACE}entry"):
             if entry is None:
                 continue
             papers.append(extract_metadata(entry))

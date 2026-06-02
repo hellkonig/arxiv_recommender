@@ -22,7 +22,14 @@ class TestRecommender(unittest.TestCase):
         ]
 
         self.candidate_papers = [
-            Paper(title="Deep Learning", abstract="Neural networks and optimization."),
+            Paper(
+                arxiv_id="1234.56789",
+                url="http://arxiv.org/abs/1234.56789",
+                title="Deep Learning",
+                abstract="Neural networks and optimization.",
+                authors=["Ada Lovelace"],
+                categories=["cs.LG"],
+            ),
             Paper(title="Machine Learning", abstract="ML techniques and applications."),
             Paper(title="Quantum AI", abstract="AI techniques for quantum systems."),
         ]
@@ -47,8 +54,17 @@ class TestRecommender(unittest.TestCase):
         self.assertTrue(len(recommendations) > 0)
         self.assertEqual(len(recommendations), len(self.candidate_papers))
         self.assertEqual(
-            sorted(recommendations, key=lambda x: x["score"], reverse=True), recommendations
+            sorted(recommendations, key=lambda item: item.score, reverse=True), recommendations
         )
+
+    def test_recommend_by_papers_preserves_metadata(self) -> None:
+        """Test ranked recommendations retain the complete paper model."""
+        recommendations = self.recommender.recommend_by_papers(self.candidate_papers)
+
+        metadata_recommendation = next(
+            item for item in recommendations if item.paper.arxiv_id == "1234.56789"
+        )
+        self.assertEqual(metadata_recommendation.paper, self.candidate_papers[0])
 
     def test_recommend_by_papers_with_top_k(self) -> None:
         """Test if top_k parameter limits the results correctly."""
