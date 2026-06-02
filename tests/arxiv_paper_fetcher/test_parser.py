@@ -1,5 +1,7 @@
 import unittest
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+
 from arxiv_recommender.arxiv_paper_fetcher.parser import (
     ArxivParseError,
     extract_metadata,
@@ -63,6 +65,14 @@ class TestParser(unittest.TestCase):
         assert paper is not None
         self.assertEqual(paper.title, "Sample Paper")
         self.assertEqual(paper.abstract, "Sample Abstract")
+
+    def test_parse_paper_info_parses_utc_z_timestamps(self) -> None:
+        """Test UTC timestamps use a Python 3.10-compatible representation."""
+        paper = parse_paper_info(self.sample_entry)
+
+        assert paper is not None
+        self.assertEqual(paper.published, datetime(2026, 5, 1, 12, tzinfo=timezone.utc))
+        self.assertEqual(paper.updated, datetime(2026, 5, 2, 12, tzinfo=timezone.utc))
 
     def test_parse_paper_info_empty_feed_returns_none(self) -> None:
         """Test parsing a valid feed with no entry returns None."""

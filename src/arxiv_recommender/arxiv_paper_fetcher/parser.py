@@ -30,7 +30,10 @@ def _extract_arxiv_id(url: str) -> str:
 def _get_datetime(entry: ET.Element, field: str) -> datetime | None:
     """Return an Atom timestamp as a datetime when present."""
     value = _get_text(entry, field)
-    return datetime.fromisoformat(value) if value else None
+    if not value:
+        return None
+    normalized_value = value.removesuffix("Z") + "+00:00" if value.endswith("Z") else value
+    return datetime.fromisoformat(normalized_value)
 
 
 def extract_metadata(entry: ET.Element) -> Paper:
