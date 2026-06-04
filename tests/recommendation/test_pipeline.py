@@ -83,6 +83,7 @@ class TestRecommendationPipeline(unittest.TestCase):
         self.assertEqual(len(result.recommendations), self.config.top_k)
 
     def test_run_preserves_recommendation_metadata(self) -> None:
+        """RecommendationPipeline should not drop metadata while orchestrating ranking."""
         pipeline = self._create_pipeline()
 
         result = pipeline.run()

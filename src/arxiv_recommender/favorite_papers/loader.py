@@ -5,6 +5,13 @@ from arxiv_recommender.schemas import Paper
 from arxiv_recommender.utils.json_handler import load_json, save_json
 
 
+def _parse_favorite_paper(data: object) -> Paper:
+    """Validate a single favorite-paper JSON object."""
+    if not isinstance(data, dict):
+        raise ValueError("Each favorite paper must be a JSON object.")
+    return Paper.model_validate(data)
+
+
 def load_favorite_papers(
     favorite_papers_path: str,
 ) -> list[Paper]:
@@ -27,9 +34,11 @@ def load_favorite_papers(
         save_json(favorite_papers_path, [])
         return []
 
-    favorite_papers_data: list[dict[str, object]] = load_json(favorite_papers_path)
+    favorite_papers_data = load_json(favorite_papers_path)
+    if not isinstance(favorite_papers_data, list):
+        raise ValueError("Favorite papers file must contain a JSON array.")
 
-    favorite_papers = [Paper.model_validate(paper) for paper in favorite_papers_data]
+    favorite_papers = [_parse_favorite_paper(paper) for paper in favorite_papers_data]
 
     logging.info(f"Successfully loaded {len(favorite_papers)} favorite papers.")
     return favorite_papers

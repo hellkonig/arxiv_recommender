@@ -5,7 +5,7 @@ from typing import Optional
 from arxiv_recommender.arxiv_paper_fetcher.utils import remove_control_characters
 from arxiv_recommender.schemas import Paper
 
-ATOM_NAMESPACE = "{http://www.w3.org/2005/Atom}"
+ATOM_NAMESPACES = {"atom": "http://www.w3.org/2005/Atom"}
 
 
 class ArxivParseError(ValueError):
@@ -14,7 +14,7 @@ class ArxivParseError(ValueError):
 
 def _get_text(entry: ET.Element, field: str) -> str:
     """Return normalized text for an Atom child element."""
-    element = entry.find(f"{ATOM_NAMESPACE}{field}")
+    element = entry.find(f"atom:{field}", ATOM_NAMESPACES)
     return (
         remove_control_characters(element.text.strip())
         if element is not None and element.text
@@ -51,12 +51,12 @@ def extract_metadata(entry: ET.Element) -> Paper:
     abstract = _get_text(entry, "summary")
     authors = [
         name
-        for author in entry.findall(f"{ATOM_NAMESPACE}author")
+        for author in entry.findall("atom:author", ATOM_NAMESPACES)
         if (name := _get_text(author, "name"))
     ]
     categories = [
         term
-        for category in entry.findall(f"{ATOM_NAMESPACE}category")
+        for category in entry.findall("atom:category", ATOM_NAMESPACES)
         if (term := category.get("term"))
     ]
 
@@ -87,7 +87,7 @@ def parse_paper_info(xml_data: str) -> Optional[Paper]:
     """
     try:
         root = ET.fromstring(xml_data)
-        entry = root.find(f"{ATOM_NAMESPACE}entry")
+        entry = root.find("atom:entry", ATOM_NAMESPACES)
         if entry is None:
             return None
         return extract_metadata(entry)
@@ -108,7 +108,7 @@ def parse_papers(xml_data: str) -> list[Paper]:
     papers = []
     try:
         root = ET.fromstring(xml_data)
-        for entry in root.findall(f"{ATOM_NAMESPACE}entry"):
+        for entry in root.findall("atom:entry", ATOM_NAMESPACES):
             if entry is None:
                 continue
             papers.append(extract_metadata(entry))
