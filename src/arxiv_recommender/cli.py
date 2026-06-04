@@ -86,8 +86,15 @@ def main() -> None:
     result = pipeline.run(date_of_pulling_papers=args.date_of_pulling_papers)
 
     logger.info("Top recommended papers:")
-    for i, paper in enumerate(result.recommendations, 1):
-        logger.info("%d. %s (%s)", i, paper["title"], paper["abstract"])
+    for i, recommendation in enumerate(result.recommendations, 1):
+        paper = recommendation.paper
+        logger.info(
+            "%d. %s (%s) [%s]",
+            i,
+            paper.title,
+            paper.abstract,
+            paper.url or "URL unavailable",
+        )
 
     if args.stats or log_level == "DEBUG":
         logger.info("Metrics summary: %s", result.metrics_summary)

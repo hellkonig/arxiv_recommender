@@ -13,7 +13,7 @@ class TestPaperLoader(unittest.TestCase):
         """Setup sample data before each test."""
         self.sample_data = [{"title": "Sample Paper", "abstract": "Test abstract."}]
         save_json("test_favorite_papers.json", self.sample_data)
-        self.expected_papers = [Paper(**p) for p in self.sample_data]
+        self.expected_papers = [Paper.model_validate(p) for p in self.sample_data]
 
     def tearDown(self) -> None:
         """Cleanup test JSON file after tests."""
@@ -33,3 +33,21 @@ class TestPaperLoader(unittest.TestCase):
             result = load_favorite_papers("non_existent.json")
             self.assertEqual(result, [])
             self.assertIn("Creating empty favorite papers file", log.output[1])
+
+    def test_load_favorite_papers_rejects_non_list_json(self) -> None:
+        """Test favorite papers must be stored as a JSON array."""
+        save_json("test_favorite_papers.json", {"title": "Not a list"})
+
+        with self.assertRaises(ValueError) as context:
+            load_favorite_papers("test_favorite_papers.json")
+
+        self.assertEqual(str(context.exception), "Favorite papers file must contain a JSON array.")
+
+    def test_load_favorite_papers_rejects_non_object_items(self) -> None:
+        """Test each favorite paper entry must be a JSON object."""
+        save_json("test_favorite_papers.json", ["not an object"])
+
+        with self.assertRaises(ValueError) as context:
+            load_favorite_papers("test_favorite_papers.json")
+
+        self.assertEqual(str(context.exception), "Each favorite paper must be a JSON object.")

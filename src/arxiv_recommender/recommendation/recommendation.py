@@ -1,9 +1,9 @@
 from time import perf_counter
 
 import numpy as np
-from typing import Any
 from sklearn.metrics.pairwise import cosine_similarity
 
+from arxiv_recommender.recommendation.types import RecommendationItem
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.text_vectorization import TextEmbedder
 from arxiv_recommender.utils.metrics import MetricsCollector
@@ -63,7 +63,7 @@ class Recommender:
 
     def recommend_by_papers(
         self, candidate_papers: list[Paper], top_k: int | None = None
-    ) -> list[dict[str, Any]]:
+    ) -> list[RecommendationItem]:
         """Recommends papers based on the highest similarity to favorite papers.
 
         Args:
@@ -99,9 +99,8 @@ class Recommender:
         )
 
         # Extract ranked papers with similarity scores
-        ranked_papers: list[dict[str, Any]] = [
-            {"title": paper.title, "abstract": paper.abstract, "score": float(score)}
-            for paper, score in sorted_papers
+        ranked_papers = [
+            RecommendationItem(paper=paper, score=float(score)) for paper, score in sorted_papers
         ]
 
         return ranked_papers[:top_k] if top_k else ranked_papers
