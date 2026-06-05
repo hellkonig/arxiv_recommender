@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import Mock, patch
 
 import requests
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
@@ -105,23 +105,17 @@ class TestArxivFetcher(unittest.TestCase):
         </feed>""")
         mock_get.return_value = mock_response
 
-        papers = self.fetcher.get_daily_papers(category="cs.AI")
+        papers = self.fetcher.get_daily_papers(date="20231001", category="cs.AI")
         self.assertEqual(len(papers), 2)
         self.assertEqual(papers[0].title, "Paper 1")
         self.assertEqual(papers[1].abstract, "Abstract 2")
         mock_get.assert_called_once_with(
             "http://export.arxiv.org/api/query",
             params={
-                "search_query": ANY,
+                "search_query": "cat:cs.AI AND submittedDate:[202310010000 TO 202310012359]",
                 "max_results": self.fetcher.max_results,
             },
             timeout=self.fetcher.timeout,
-        )
-        request_params = mock_get.call_args.kwargs["params"]
-        self.assertEqual(request_params["max_results"], self.fetcher.max_results)
-        self.assertEqual(
-            request_params["search_query"].split(" AND ")[0],
-            "cat:cs.AI",
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -134,13 +128,15 @@ class TestArxivFetcher(unittest.TestCase):
         </feed>""")
         mock_get.return_value = mock_response
 
-        papers = self.fetcher.get_daily_papers(category="cs.LG")
+        papers = self.fetcher.get_daily_papers(date="20231001", category="cs.LG")
         self.assertEqual(len(papers), 0)
-        request_params = mock_get.call_args.kwargs["params"]
-        self.assertEqual(request_params["max_results"], self.fetcher.max_results)
-        self.assertEqual(
-            request_params["search_query"].split(" AND ")[0],
-            "cat:cs.LG",
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={
+                "search_query": "cat:cs.LG AND submittedDate:[202310010000 TO 202310012359]",
+                "max_results": self.fetcher.max_results,
+            },
+            timeout=self.fetcher.timeout,
         )
 
     @patch("requests.get")

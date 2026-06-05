@@ -3,6 +3,7 @@ import logging
 import os
 
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.arxiv_paper_fetcher.utils import validate_arxiv_date
 from arxiv_recommender.favorite_papers import FileFavoritePapersProvider
 from arxiv_recommender.recommendation import RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig
@@ -10,6 +11,14 @@ from arxiv_recommender.utils import MetricsCollector, setup_logging
 from arxiv_recommender.utils.json_handler import load_json
 from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
 from arxiv_recommender.utils.model_loader import load_vectorization_model
+
+
+def parse_arxiv_date(value: str) -> str:
+    """Parse and validate a CLI date argument."""
+    try:
+        return validate_arxiv_date(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from None
 
 
 def load_config(config_path: str) -> AppConfig:
@@ -40,9 +49,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--date_of_pulling_papers",
-        type=str,
+        type=parse_arxiv_date,
         default=None,
-        help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to today.",
+        help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to yesterday.",
     )
     parser.add_argument(
         "--log-level",

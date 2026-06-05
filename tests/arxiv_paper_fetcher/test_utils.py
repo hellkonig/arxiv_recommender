@@ -2,6 +2,8 @@ import unittest
 from arxiv_recommender.arxiv_paper_fetcher.utils import (
     build_arxiv_query_params,
     remove_control_characters,
+    validate_arxiv_category,
+    validate_arxiv_date,
 )
 
 
@@ -43,6 +45,19 @@ class TestUtils(unittest.TestCase):
             with self.subTest(category=category):
                 with self.assertRaisesRegex(ValueError, "Category must be an arXiv category"):
                     build_arxiv_query_params(date="20231001", category=category)
+
+    def test_validate_arxiv_date_returns_valid_date(self) -> None:
+        """Test valid dates are returned unchanged."""
+        self.assertEqual(validate_arxiv_date("20231001"), "20231001")
+
+    def test_validate_arxiv_date_rejects_nonexistent_date(self) -> None:
+        """Test nonexistent calendar dates are rejected."""
+        with self.assertRaisesRegex(ValueError, "Date must be in YYYYMMDD format"):
+            validate_arxiv_date("20230230")
+
+    def test_validate_arxiv_category_returns_valid_category(self) -> None:
+        """Test valid categories are returned unchanged."""
+        self.assertEqual(validate_arxiv_category("cs.LG"), "cs.LG")
 
     def test_remove_control_characters(self) -> None:
         """Test removing control characters from a string"""
