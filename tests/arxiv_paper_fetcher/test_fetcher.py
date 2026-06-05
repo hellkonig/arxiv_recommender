@@ -35,6 +35,11 @@ class TestArxivFetcher(unittest.TestCase):
         assert paper is not None
         self.assertEqual(paper.title, "Sample Paper")
         self.assertEqual(paper.abstract, "Sample Abstract")
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={"id_list": "1234.56789"},
+            timeout=self.fetcher.timeout,
+        )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("arxiv_recommender.utils.retry.time.sleep", return_value=None)
@@ -100,10 +105,18 @@ class TestArxivFetcher(unittest.TestCase):
         </feed>""")
         mock_get.return_value = mock_response
 
-        papers = self.fetcher.get_daily_papers(category="cs.AI")
+        papers = self.fetcher.get_daily_papers(date="20231001", category="cs.AI")
         self.assertEqual(len(papers), 2)
         self.assertEqual(papers[0].title, "Paper 1")
         self.assertEqual(papers[1].abstract, "Abstract 2")
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={
+                "search_query": "cat:cs.AI AND submittedDate:[202310010000 TO 202310012359]",
+                "max_results": self.fetcher.max_results,
+            },
+            timeout=self.fetcher.timeout,
+        )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("requests.get")
@@ -115,8 +128,16 @@ class TestArxivFetcher(unittest.TestCase):
         </feed>""")
         mock_get.return_value = mock_response
 
-        papers = self.fetcher.get_daily_papers(category="cs.LG")
+        papers = self.fetcher.get_daily_papers(date="20231001", category="cs.LG")
         self.assertEqual(len(papers), 0)
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={
+                "search_query": "cat:cs.LG AND submittedDate:[202310010000 TO 202310012359]",
+                "max_results": self.fetcher.max_results,
+            },
+            timeout=self.fetcher.timeout,
+        )
 
     @patch("requests.get")
     def test_get_daily_papers_malformed_xml_raises(self, mock_get: Mock) -> None:

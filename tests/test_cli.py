@@ -1,3 +1,4 @@
+import argparse
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -174,6 +175,16 @@ class TestCli(unittest.TestCase):
         mock_load_vectorization_model.assert_called_once()
         mock_metrics_class.assert_called_once()
         mock_provider_class.assert_called_once()
+
+    def test_parse_arxiv_date_accepts_valid_date(self) -> None:
+        self.assertEqual(cli._parse_arxiv_date("20260522"), "20260522")
+
+    def test_parse_arxiv_date_rejects_invalid_date(self) -> None:
+        with self.assertRaisesRegex(
+            argparse.ArgumentTypeError,
+            "Date must be in YYYYMMDD format; got '2026-05-22'",
+        ):
+            cli._parse_arxiv_date("2026-05-22")
 
 
 if __name__ == "__main__":

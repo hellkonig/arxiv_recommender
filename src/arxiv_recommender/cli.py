@@ -1,33 +1,22 @@
 import argparse
 import logging
-import os
 
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
+from arxiv_recommender.arxiv_paper_fetcher.utils import validate_arxiv_date
 from arxiv_recommender.favorite_papers import FileFavoritePapersProvider
 from arxiv_recommender.recommendation import RecommendationPipeline
-from arxiv_recommender.schemas import AppConfig
 from arxiv_recommender.utils import MetricsCollector, setup_logging
-from arxiv_recommender.utils.json_handler import load_json
+from arxiv_recommender.utils.config_loader import load_config
 from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 
 
-def load_config(config_path: str) -> AppConfig:
-    """Loads the configuration file.
-
-    Args:
-        config_path: Path to the configuration JSON file.
-
-    Returns:
-        Parsed configuration object.
-
-    Raises:
-        FileNotFoundError: If the configuration file is missing.
-    """
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    config_data = load_json(config_path)
-    return AppConfig.model_validate(config_data)
+def _parse_arxiv_date(value: str) -> str:
+    """Adapt arXiv date validation for argparse error handling."""
+    try:
+        return validate_arxiv_date(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from None
 
 
 def main() -> None:
@@ -40,9 +29,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--date_of_pulling_papers",
-        type=str,
+        type=_parse_arxiv_date,
         default=None,
-        help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to today.",
+        help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to yesterday.",
     )
     parser.add_argument(
         "--log-level",
