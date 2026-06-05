@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import requests
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
@@ -35,6 +35,11 @@ class TestArxivFetcher(unittest.TestCase):
         assert paper is not None
         self.assertEqual(paper.title, "Sample Paper")
         self.assertEqual(paper.abstract, "Sample Abstract")
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={"id_list": "1234.56789"},
+            timeout=self.fetcher.timeout,
+        )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("arxiv_recommender.utils.retry.time.sleep", return_value=None)
@@ -104,6 +109,20 @@ class TestArxivFetcher(unittest.TestCase):
         self.assertEqual(len(papers), 2)
         self.assertEqual(papers[0].title, "Paper 1")
         self.assertEqual(papers[1].abstract, "Abstract 2")
+        mock_get.assert_called_once_with(
+            "http://export.arxiv.org/api/query",
+            params={
+                "search_query": ANY,
+                "max_results": self.fetcher.max_results,
+            },
+            timeout=self.fetcher.timeout,
+        )
+        request_params = mock_get.call_args.kwargs["params"]
+        self.assertEqual(request_params["max_results"], self.fetcher.max_results)
+        self.assertEqual(
+            request_params["search_query"].split(" AND ")[0],
+            "cat:cs.AI",
+        )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("requests.get")
@@ -117,6 +136,12 @@ class TestArxivFetcher(unittest.TestCase):
 
         papers = self.fetcher.get_daily_papers(category="cs.LG")
         self.assertEqual(len(papers), 0)
+        request_params = mock_get.call_args.kwargs["params"]
+        self.assertEqual(request_params["max_results"], self.fetcher.max_results)
+        self.assertEqual(
+            request_params["search_query"].split(" AND ")[0],
+            "cat:cs.LG",
+        )
 
     @patch("requests.get")
     def test_get_daily_papers_malformed_xml_raises(self, mock_get: Mock) -> None:

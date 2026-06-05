@@ -1,26 +1,50 @@
 import unittest
 from arxiv_recommender.arxiv_paper_fetcher.utils import (
-    format_arxiv_query,
+    build_arxiv_query_params,
     remove_control_characters,
 )
 
 
 class TestUtils(unittest.TestCase):
-    def test_format_arxiv_query(self):
-        """Test formatting arXiv API query with category and max_results"""
-        result = format_arxiv_query(category="cs.AI", max_results=100)
-        self.assertIn("search_query=cat:cs.AI", result)
-        self.assertIn("max_results=100", result)
-
-    def test_format_arxiv_query_with_date(self):
-        """Test formatting arXiv API query with date"""
-        result = format_arxiv_query(date="20231001", category="cs.AI", max_results=100)
-        self.assertIn(
-            "search_query=cat:cs.AI+AND+submittedDate:[202310010000+TO+202310012359]", result
+    def test_build_arxiv_query_params(self) -> None:
+        """Test building arXiv API query params with category and max_results."""
+        result = build_arxiv_query_params(date="20231001", category="cs.AI", max_results=100)
+        self.assertEqual(
+            result,
+            {
+                "search_query": "cat:cs.AI AND submittedDate:[202310010000 TO 202310012359]",
+                "max_results": 100,
+            },
         )
-        self.assertIn("max_results=100", result)
 
-    def test_remove_control_characters(self):
+    def test_build_arxiv_query_params_without_category(self) -> None:
+        """Test building arXiv API query params with date only."""
+        result = build_arxiv_query_params(date="20231001", max_results=100)
+        self.assertEqual(
+            result,
+            {
+                "search_query": "submittedDate:[202310010000 TO 202310012359]",
+                "max_results": 100,
+            },
+        )
+
+    def test_build_arxiv_query_params_rejects_invalid_date(self) -> None:
+        """Test invalid dates are rejected."""
+        invalid_dates = ["", "2023-10-01"]
+        for date in invalid_dates:
+            with self.subTest(date=date):
+                with self.assertRaisesRegex(ValueError, "Date must be in YYYYMMDD format"):
+                    build_arxiv_query_params(date=date, category="cs.AI")
+
+    def test_build_arxiv_query_params_rejects_invalid_category(self) -> None:
+        """Test invalid categories are rejected."""
+        invalid_categories = ["", "cs AI", "cat:cs.AI", "cs.AI&max_results=100"]
+        for category in invalid_categories:
+            with self.subTest(category=category):
+                with self.assertRaisesRegex(ValueError, "Category must be an arXiv category"):
+                    build_arxiv_query_params(date="20231001", category=category)
+
+    def test_remove_control_characters(self) -> None:
         """Test removing control characters from a string"""
         input_text = "Hello\nWorld\x00"
         cleaned_text = remove_control_characters(input_text)

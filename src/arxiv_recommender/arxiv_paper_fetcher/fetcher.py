@@ -2,12 +2,11 @@
 
 import logging
 import requests
-from typing import Optional
 
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.utils.retry import retry_with_backoff
 from .parser import parse_paper_info, parse_papers
-from .utils import format_arxiv_query
+from .utils import build_arxiv_query_params
 
 
 class ArxivFetcher:
@@ -20,14 +19,14 @@ class ArxivFetcher:
             max_results: Maximum results per API call (default: 2000).
             timeout: Timeout for API requests in seconds (default: 10).
         """
-        self.base_url = "http://export.arxiv.org/api/query?"
+        self.base_url = "http://export.arxiv.org/api/query"
         self.namespace = {"arxiv": "http://www.w3.org/2005/Atom"}
         self.max_results = max_results
         self.timeout = timeout
         self._logger = logging.getLogger(__name__)
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
-    def get_paper_by_id(self, paper_id: str) -> Optional[Paper]:
+    def get_paper_by_id(self, paper_id: str) -> Paper | None:
         """Fetches a single paper's title and abstract using its arXiv ID.
 
         Args:
@@ -39,16 +38,13 @@ class ArxivFetcher:
         Raises:
             requests.RequestException: If the API request fails.
         """
-        url = f"{self.base_url}id_list={paper_id}"
-        response = requests.get(url, timeout=self.timeout)
+        response = requests.get(self.base_url, params={"id_list": paper_id}, timeout=self.timeout)
         response.raise_for_status()
 
         return parse_paper_info(response.text)
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
-    def get_daily_papers(
-        self, date: Optional[str] = None, category: Optional[str] = None
-    ) -> list[Paper]:
+    def get_daily_papers(self, date: str | None = None, category: str | None = None) -> list[Paper]:
         """Fetches papers submitted to arXiv in the last 24 hours or on a specific date.
 
         Args:
@@ -62,11 +58,10 @@ class ArxivFetcher:
         Raises:
             requests.RequestException: If the API request fails.
         """
-        query = format_arxiv_query(date, category, max_results=self.max_results)
-        self._logger.info("Fetching daily papers with query: %s", query)
-        url = f"{self.base_url}{query}&max_results={self.max_results}"
+        params = build_arxiv_query_params(date, category, max_results=self.max_results)
+        self._logger.info("Fetching daily papers with params: %s", params)
 
-        response = requests.get(url, timeout=self.timeout)
+        response = requests.get(self.base_url, params=params, timeout=self.timeout)
         response.raise_for_status()
 
         papers = parse_papers(response.text)
