@@ -40,11 +40,8 @@ class TestUtils(unittest.TestCase):
 
     def test_build_arxiv_query_params_rejects_invalid_category(self) -> None:
         """Test invalid categories are rejected."""
-        invalid_categories = ["", "cs AI", "cat:cs.AI", "cs.AI&max_results=100"]
-        for category in invalid_categories:
-            with self.subTest(category=category):
-                with self.assertRaisesRegex(ValueError, "Category must be an arXiv category"):
-                    build_arxiv_query_params(date="20231001", category=category)
+        with self.assertRaisesRegex(ValueError, "Category must be an arXiv category"):
+            build_arxiv_query_params(date="20231001", category="cs AI")
 
     def test_validate_arxiv_date_returns_valid_date(self) -> None:
         """Test valid dates are returned unchanged."""
@@ -58,6 +55,14 @@ class TestUtils(unittest.TestCase):
     def test_validate_arxiv_category_returns_valid_category(self) -> None:
         """Test valid categories are returned unchanged."""
         self.assertEqual(validate_arxiv_category("cs.LG"), "cs.LG")
+
+    def test_validate_arxiv_category_rejects_invalid_categories(self) -> None:
+        """Test invalid categories are rejected."""
+        invalid_categories = ["", "cs AI", "cat:cs.AI", "cs.AI&max_results=100"]
+        for category in invalid_categories:
+            with self.subTest(category=category):
+                with self.assertRaisesRegex(ValueError, "Category must be an arXiv category"):
+                    validate_arxiv_category(category)
 
     def test_remove_control_characters(self) -> None:
         """Test removing control characters from a string"""

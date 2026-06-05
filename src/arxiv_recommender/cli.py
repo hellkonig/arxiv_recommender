@@ -13,8 +13,8 @@ from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
 from arxiv_recommender.utils.model_loader import load_vectorization_model
 
 
-def parse_arxiv_date(value: str) -> str:
-    """Parse and validate a CLI date argument."""
+def _parse_arxiv_date(value: str) -> str:
+    """Adapt arXiv date validation for argparse error handling."""
     try:
         return validate_arxiv_date(value)
     except ValueError as exc:
@@ -49,7 +49,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--date_of_pulling_papers",
-        type=parse_arxiv_date,
+        type=_parse_arxiv_date,
         default=None,
         help="Date of pulling papers in YYYYMMDD format. If not provided, defaults to yesterday.",
     )
