@@ -180,7 +180,10 @@ class TestCli(unittest.TestCase):
         self.assertEqual(cli._parse_arxiv_date("20260522"), "20260522")
 
     def test_parse_arxiv_date_rejects_invalid_date(self) -> None:
-        with self.assertRaisesRegex(argparse.ArgumentTypeError, "Date must be in YYYYMMDD format"):
+        with self.assertRaisesRegex(
+            argparse.ArgumentTypeError,
+            "Date must be in YYYYMMDD format; got '2026-05-22'",
+        ):
             cli._parse_arxiv_date("2026-05-22")
 
 

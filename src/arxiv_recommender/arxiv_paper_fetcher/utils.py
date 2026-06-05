@@ -18,11 +18,11 @@ def validate_arxiv_date(date: str) -> str:
         ValueError: If the date is not a real date in YYYYMMDD format.
     """
     if not ARXIV_DATE_PATTERN.fullmatch(date):
-        raise ValueError("Date must be in YYYYMMDD format.")
+        raise ValueError(f"Date must be in YYYYMMDD format; got {date!r}.")
     try:
         datetime.strptime(date, "%Y%m%d")
     except ValueError:
-        raise ValueError("Date must be in YYYYMMDD format.") from None
+        raise ValueError(f"Date must be in YYYYMMDD format; got {date!r}.") from None
     return date
 
 

@@ -35,7 +35,10 @@ class TestUtils(unittest.TestCase):
         invalid_dates = ["", "2023-10-01"]
         for date in invalid_dates:
             with self.subTest(date=date):
-                with self.assertRaisesRegex(ValueError, "Date must be in YYYYMMDD format"):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    rf"Date must be in YYYYMMDD format; got {date!r}",
+                ):
                     build_arxiv_query_params(date=date, category="cs.AI")
 
     def test_build_arxiv_query_params_rejects_invalid_category(self) -> None:
@@ -49,7 +52,10 @@ class TestUtils(unittest.TestCase):
 
     def test_validate_arxiv_date_rejects_nonexistent_date(self) -> None:
         """Test nonexistent calendar dates are rejected."""
-        with self.assertRaisesRegex(ValueError, "Date must be in YYYYMMDD format"):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Date must be in YYYYMMDD format; got '20230230'",
+        ):
             validate_arxiv_date("20230230")
 
     def test_validate_arxiv_category_returns_valid_category(self) -> None:
