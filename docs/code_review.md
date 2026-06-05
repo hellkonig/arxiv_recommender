@@ -3,7 +3,7 @@
 Objective review of the current `arxiv_recommender` codebase, focused on correctness, maintainability, ML quality, testing, and operational readiness.
 
 - Reviewed on: 2026-05-25
-- Updated on: 2026-05-31 after PR #30
+- Updated on: 2026-06-06 after PR #32
 - Scope: current codebase snapshot
 - Context: local CLI or localhost app priority
 
@@ -14,7 +14,7 @@ This document is a review snapshot, not a final verdict. Priority should follow 
 - `uv run ruff check .`: passed.
 - `uv run ruff format --check .`: passed.
 - `uv run python -m mypy src`: passed.
-- `uv run python -m pytest`: passed, 100 tests.
+- `uv run python -m pytest`: passed, 117 tests.
 
 ## Priority Findings
 
@@ -90,15 +90,18 @@ Relevant code:
 - `src/arxiv_recommender/arxiv_paper_fetcher/fetcher.py`
 - `src/arxiv_recommender/text_vectorization/cache.py`
 
-### Medium: Recommendation Outputs Lack Paper Identity
+### Resolved: Recommendation Outputs Lacked Paper Identity
 
-The `Paper` schema only includes title and abstract. Recommendations return only title, abstract, and score. This makes it hard to inspect results, avoid duplicates, link back to arXiv, or build user feedback loops.
+`Paper` previously only included title and abstract, and recommendations returned loose dictionaries. This was resolved by PR #31, `feat: add structured paper metadata and typed recommendations`.
 
-Recommended improvements:
+Status:
 
-- Add arXiv ID, URL, authors, categories, published date, and updated date to the paper schema.
-- Return structured recommendation objects instead of `dict[str, Any]`.
-- Preserve source metadata through parsing, ranking, and CLI output.
+- `Paper` now includes optional arXiv ID, URL, authors, categories, published timestamp, and updated timestamp.
+- arXiv Atom parsing extracts paper identity and metadata.
+- Recommendation results now use typed `RecommendationItem` models instead of `dict[str, Any]`.
+- Metadata is preserved through parsing, ranking, pipeline output, and CLI formatting.
+- Favorite-paper JSON loading validates untrusted JSON shape before Pydantic model validation.
+- Python 3.10-compatible UTC timestamp parsing is covered by tests.
 
 Relevant code:
 
@@ -135,21 +138,30 @@ Relevant code:
 - `tests/utils/test_logging.py`
 - `tests/utils/test_model_loader.py`
 
-### Medium: arXiv Query Construction Is Brittle
+### Resolved: arXiv Query Construction Was Brittle
 
-Query strings are manually assembled, and `max_results` is included in both the formatted query and fetcher URL. Manual URL construction is easier to break and harder to validate.
+Daily-paper query construction previously assembled arXiv API URLs manually, and `max_results` was included in both the formatted query and fetcher URL. This was resolved by PR #32, `fix: validate arxiv query parameters`.
 
-Recommended improvements:
+Status:
 
-- Use `requests.get(..., params=...)` instead of manual URL string concatenation.
-- Avoid adding `max_results` twice.
-- Validate category and date inputs.
-- Consider exposing category in config if this is part of normal product behavior.
+- `ArxivFetcher` now calls `requests.get(..., params=...)` for paper ID and daily-paper requests.
+- Daily-paper query params are built as structured data instead of URL fragments.
+- `max_results` is passed once as a request parameter.
+- arXiv date validation enforces exact `YYYYMMDD` shape and real calendar dates.
+- arXiv category validation rejects malformed category/query-fragment inputs.
+- CLI date parsing validates before pipeline setup and preserves clear argparse errors.
+- Config loading moved out of `cli.py` into `utils.config_loader`, keeping CLI orchestration thinner.
 
 Relevant code:
 
 - `src/arxiv_recommender/arxiv_paper_fetcher/utils.py`
 - `src/arxiv_recommender/arxiv_paper_fetcher/fetcher.py`
+- `src/arxiv_recommender/cli.py`
+- `src/arxiv_recommender/utils/config_loader.py`
+- `tests/arxiv_paper_fetcher/test_utils.py`
+- `tests/arxiv_paper_fetcher/test_fetcher.py`
+- `tests/test_cli.py`
+- `tests/utils/test_config_loader.py`
 
 ### Low: Dependency And Packaging Workflow Is Inconsistent
 
@@ -174,14 +186,12 @@ Relevant files:
 
 The following order is recommended if the immediate goal is a usable local CLI app or a web app served on `localhost`.
 
-1. Add structured paper identity fields and recommendation output models.
-2. Complete remaining schema validation for paper data and request inputs.
-3. Add a lightweight retrieval quality evaluation harness.
-4. Improve CLI error reporting for fetcher and parser failures.
-5. Improve the CLI workflow or build a thin localhost web UI.
-6. Wire metrics fully or simplify them to only report trustworthy values.
-7. Add batch embedding support and benchmark latency.
-8. Clean up dependency and packaging workflow.
+1. Add a lightweight retrieval quality evaluation harness.
+2. Improve CLI error reporting for fetcher and parser failures.
+3. Improve the CLI workflow or build a thin localhost web UI.
+4. Wire metrics fully or simplify them to only report trustworthy values.
+5. Add batch embedding support and benchmark latency.
+6. Clean up dependency and packaging workflow.
 
 ## Local App Priority Notes
 
@@ -211,8 +221,8 @@ Recommended improvements:
 If building toward a local user-facing app, the next concrete bar should be:
 
 - clear API and input errors
-- validated configuration and date inputs
-- recommendation outputs that include paper identity and links
+- validated configuration, CLI date, and arXiv query inputs, now available after PR #32
+- recommendation outputs with paper identity and links, now available after PR #31
 - a lightweight but real retrieval evaluation loop
 - a usable CLI or localhost interface
 - trustworthy logs and metrics
