@@ -14,14 +14,16 @@ class EmbeddingCache:
         _cache (OrderedDict): Internal cache storage.
     """
 
-    def __init__(self, max_size: int = 1000) -> None:
+    def __init__(self, max_size: int = 1000, namespace: str = "default") -> None:
         """
         Initializes the embedding cache.
 
         Args:
             max_size (int): Maximum number of embeddings to store.
+            namespace (str): Cache namespace for embedding model/config versioning.
         """
         self.max_size = max_size
+        self.namespace = namespace
         self._cache: OrderedDict[str, np.ndarray] = OrderedDict()
         self._hits = 0
         self._misses = 0
@@ -36,7 +38,8 @@ class EmbeddingCache:
         Returns:
             str: SHA256 hash of the text.
         """
-        return hashlib.sha256(text.encode()).hexdigest()
+        cache_input = f"{self.namespace}\n{text}"
+        return hashlib.sha256(cache_input.encode()).hexdigest()
 
     def get(self, text: str) -> np.ndarray | None:
         """
@@ -91,5 +94,6 @@ class EmbeddingCache:
             "misses": self._misses,
             "size": len(self._cache),
             "max_size": self.max_size,
+            "namespace": self.namespace,
             "hit_rate": hit_rate,
         }

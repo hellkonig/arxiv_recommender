@@ -13,9 +13,10 @@ from arxiv_recommender.utils.model_loader import (
 
 
 class FakeEmbedder(TextEmbedder):
-    def __init__(self, model_name: str, cache_size: int) -> None:
+    def __init__(self, model_name: str, cache_size: int, **kwargs: Any) -> None:
         self.model_name = model_name
         self.cache_size = cache_size
+        self.kwargs = kwargs
 
     def process(self, text: str) -> np.ndarray:
         return np.array([len(text)])
@@ -81,6 +82,36 @@ class TestModelLoader(unittest.TestCase):
         fake_vectorizer = cast(FakeEmbedder, vectorizer)
         self.assertEqual(fake_vectorizer.model_name, "custom_vectorinzer_model_name")
         self.assertEqual(fake_vectorizer.cache_size, 1000)
+
+    @patch("importlib.import_module")
+    def test_load_vectorizer_passes_options(self, mock_import: Any) -> None:
+        """
+        Test passing optional vectorizer settings to the configured class.
+        """
+        mock_module = SimpleNamespace(CustomVectorizer=FakeEmbedder)
+        mock_import.return_value = mock_module
+
+        vectorizer = load_vectorization_model(
+            "custom_vectorizer",
+            "CustomVectorizer",
+            "custom_model",
+            1000,
+            vectorizer_options={
+                "pooling_strategy": "cls",
+                "normalize_embeddings": True,
+                "max_length": 256,
+            },
+        )
+
+        fake_vectorizer = cast(FakeEmbedder, vectorizer)
+        self.assertEqual(
+            fake_vectorizer.kwargs,
+            {
+                "pooling_strategy": "cls",
+                "normalize_embeddings": True,
+                "max_length": 256,
+            },
+        )
 
     @patch("importlib.import_module")
     def test_load_missing_vectorizer_module(self, mock_import: Any) -> None:

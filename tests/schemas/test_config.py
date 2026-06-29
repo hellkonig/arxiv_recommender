@@ -15,6 +15,9 @@ class TestVectorizerConfig:
         assert config.module_name == "distil_bert"
         assert config.class_name == "DistilBERTEmbedding"
         assert config.model_name == "distilbert-base-uncased"
+        assert config.pooling_strategy == "auto"
+        assert config.normalize_embeddings == "auto"
+        assert config.max_length == 512
 
     def test_vectorizer_is_frozen(self) -> None:
         """Test that VectorizerConfig is immutable."""
@@ -53,6 +56,43 @@ class TestVectorizerConfig:
             cache_size=0,
         )
         assert config.cache_size == 0
+
+    def test_vectorizer_accepts_embedding_options(self) -> None:
+        """Test configurable embedding pooling and normalization options."""
+        config = VectorizerConfig(
+            module_name="huggingface_embed",
+            class_name="HuggingFaceEmbedding",
+            model_name="BAAI/bge-small-en-v1.5",
+            pooling_strategy="cls",
+            normalize_embeddings=True,
+            max_length=256,
+        )
+
+        assert config.pooling_strategy == "cls"
+        assert config.normalize_embeddings is True
+        assert config.max_length == 256
+
+    def test_vectorizer_rejects_invalid_pooling_strategy(self) -> None:
+        """Test that pooling_strategy is restricted to supported values."""
+        with pytest.raises(Exception):
+            VectorizerConfig.model_validate(
+                {
+                    "module_name": "test",
+                    "class_name": "TestClass",
+                    "model_name": "test-model",
+                    "pooling_strategy": "max",
+                }
+            )
+
+    def test_vectorizer_rejects_non_positive_max_length(self) -> None:
+        """Test that max_length must be positive."""
+        with pytest.raises(Exception):
+            VectorizerConfig(
+                module_name="test",
+                class_name="TestClass",
+                model_name="test-model",
+                max_length=0,
+            )
 
 
 class TestAppConfig:

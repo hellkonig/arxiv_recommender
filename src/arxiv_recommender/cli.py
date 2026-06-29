@@ -59,6 +59,11 @@ def main() -> None:
         class_name=config.vectorizer.class_name,
         model_name=config.vectorizer.model_name,
         cache_size=config.vectorizer.cache_size,
+        vectorizer_options={
+            "pooling_strategy": config.vectorizer.pooling_strategy,
+            "normalize_embeddings": config.vectorizer.normalize_embeddings,
+            "max_length": config.vectorizer.max_length,
+        },
     )
     metrics = MetricsCollector()
     favorite_papers_provider = FileFavoritePapersProvider(

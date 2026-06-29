@@ -15,6 +15,7 @@ def load_vectorization_model(
     class_name: str,
     model_name: str,
     cache_size: int,
+    vectorizer_options: dict[str, Any] | None = None,
 ) -> TextEmbedder:
     """
     Dynamically loads a text vectorization model.
@@ -24,6 +25,7 @@ def load_vectorization_model(
         class_name (str): Name of the model class to load.
         model_name (str): Name of the model to load.
         cache_size (int): Maximum number of embeddings to cache.
+        vectorizer_options: Additional keyword arguments for the vectorizer.
 
     Returns:
         Instantiated text embedder.
@@ -55,7 +57,7 @@ def load_vectorization_model(
     model_class = _get_vectorizer_class(module, class_name, full_module_name)
 
     try:
-        model = model_class(model_name, cache_size=cache_size)
+        model = model_class(model_name, cache_size=cache_size, **(vectorizer_options or {}))
     except Exception as exc:
         logging.error(
             "Failed to instantiate vectorizer '%s.%s' with model '%s': %s",

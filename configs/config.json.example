@@ -3,8 +3,11 @@
     "vectorizer": {
         "module_name": "huggingface_embed",
         "class_name": "HuggingFaceEmbedding",
-        "model_name": "distilbert-base-uncased",
-        "cache_size": 1000
+        "model_name": "BAAI/bge-small-en-v1.5",
+        "cache_size": 1000,
+        "pooling_strategy": "auto",
+        "normalize_embeddings": "auto",
+        "max_length": 512
     },
     "top_k": 10,
     "log_level": "INFO"
