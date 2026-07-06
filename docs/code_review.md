@@ -3,7 +3,7 @@
 Objective review of the current `arxiv_recommender` codebase, focused on correctness, maintainability, ML quality, testing, and operational readiness.
 
 - Reviewed on: 2026-05-25
-- Updated on: 2026-06-06 after PR #32
+- Updated on: 2026-07-07 after PR #35
 - Scope: current codebase snapshot
 - Context: local CLI or localhost app priority
 
@@ -14,22 +14,29 @@ This document is a review snapshot, not a final verdict. Priority should follow 
 - `uv run ruff check .`: passed.
 - `uv run ruff format --check .`: passed.
 - `uv run python -m mypy src`: passed.
-- `uv run python -m pytest`: passed, 117 tests.
+- `uv run python -m pytest`: passed, 138 tests.
 
 ## Priority Findings
 
 These findings describe the main engineering and ML risks in the current codebase. Their importance does not change, but the order of implementation should follow the product goal. For a local user-facing app, retrieval quality still matters; batching and larger-scale performance tuning can move later if current runtime is acceptable.
 
-### High: Recommendation Quality Is Not ML-Validated
+### Partially Resolved: Recommendation Quality Is Not ML-Validated
 
-The recommender currently uses raw mean-pooled Hugging Face model outputs from `AutoModel`. DistilBERT is not trained as a sentence embedding model, so semantic similarity quality may be weak even if tests pass.
+PR #35 replaced the default raw DistilBERT configuration with a BGE-small
+embedding profile. `BAAI/bge-small-en-v1.5` now resolves to CLS pooling with
+L2-normalized embeddings, and cache entries are versioned by resolved embedding
+configuration.
+
+The remaining gap is evaluation: recommendation quality is still not validated
+against explicit user feedback or a retrieval benchmark.
 
 Recommended improvements:
 
 - Add an offline evaluation harness with labeled or proxy relevance data.
 - Track metrics such as recall@k, NDCG@k, MRR, and diversity.
 - Compare against simple baselines such as TF-IDF/BM25 before changing models.
-- Consider sentence-transformer or arXiv-domain embedding models if evaluation shows improvement.
+- Compare BGE-small with SPECTER2 and TF-IDF after enough eligible feedback
+  exists.
 
 Relevant code:
 

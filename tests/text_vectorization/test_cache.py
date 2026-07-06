@@ -1,16 +1,17 @@
 import unittest
+
 import numpy as np
 
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
 
 
 class TestEmbeddingCache(unittest.TestCase):
-    def test_cache_miss_returns_none(self):
+    def test_cache_miss_returns_none(self) -> None:
         cache = EmbeddingCache(max_size=10)
         result = cache.get("some text")
         self.assertIsNone(result)
 
-    def test_cache_hit_returns_embedding(self):
+    def test_cache_hit_returns_embedding(self) -> None:
         cache = EmbeddingCache(max_size=10)
         embedding = np.array([1.0, 2.0, 3.0])
         cache.put("test text", embedding)
@@ -18,7 +19,7 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertIsNotNone(result)
         np.testing.assert_array_equal(result, embedding)
 
-    def test_cache_eviction_lru(self):
+    def test_cache_eviction_lru(self) -> None:
         cache = EmbeddingCache(max_size=2)
         cache.put("text1", np.array([1.0]))
         cache.put("text2", np.array([2.0]))
@@ -27,7 +28,7 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertIsNone(cache.get("text2"))
         self.assertIsNotNone(cache.get("text1"))
 
-    def test_clear_resets_stats(self):
+    def test_clear_resets_stats(self) -> None:
         cache = EmbeddingCache(max_size=10)
         cache.put("text", np.array([1.0]))
         cache.get("text")
@@ -37,7 +38,7 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertEqual(cache.stats()["misses"], 0)
         self.assertEqual(cache.stats()["size"], 0)
 
-    def test_stats_calculation(self):
+    def test_stats_calculation(self) -> None:
         cache = EmbeddingCache(max_size=10)
         cache.put("text1", np.array([1.0]))
         cache.get("text1")
@@ -47,9 +48,19 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertEqual(stats["misses"], 1)
         self.assertEqual(stats["size"], 1)
         self.assertEqual(stats["max_size"], 10)
+        self.assertEqual(stats["namespace"], "default")
         self.assertEqual(stats["hit_rate"], 0.5)
 
-    def test_same_text_returns_hit(self):
+    def test_namespace_separates_cache_keys(self) -> None:
+        first_cache = EmbeddingCache(max_size=10, namespace="model-a")
+        second_cache = EmbeddingCache(max_size=10, namespace="model-b")
+
+        self.assertNotEqual(
+            first_cache._compute_key("same text"),
+            second_cache._compute_key("same text"),
+        )
+
+    def test_same_text_returns_hit(self) -> None:
         cache = EmbeddingCache(max_size=10)
         embedding = np.array([1.0, 2.0, 3.0])
         cache.put("test", embedding)
@@ -59,7 +70,7 @@ class TestEmbeddingCache(unittest.TestCase):
         self.assertEqual(stats["hits"], 2)
         self.assertEqual(stats["misses"], 0)
 
-    def test_cache_hit_moves_key_to_end(self):
+    def test_cache_hit_moves_key_to_end(self) -> None:
         cache = EmbeddingCache(max_size=3)
         cache.put("a", np.array([1.0]))
         cache.put("b", np.array([2.0]))

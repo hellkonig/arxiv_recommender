@@ -50,8 +50,11 @@ Edit `configs/config.json`:
     "vectorizer": {
         "module_name": "huggingface_embed",
         "class_name": "HuggingFaceEmbedding",
-        "model_name": "distilbert-base-uncased",
-        "cache_size": 1000
+        "model_name": "BAAI/bge-small-en-v1.5",
+        "cache_size": 1000,
+        "pooling_strategy": "auto",
+        "normalize_embeddings": "auto",
+        "max_length": 512
     },
     "top_k": 10,
     "log_level": "INFO"
@@ -65,6 +68,9 @@ Edit `configs/config.json`:
 | `vectorizer.class_name` | Class name for vectorizer |
 | `vectorizer.model_name` | Model name or local path |
 | `vectorizer.cache_size` | Maximum number of embeddings to cache |
+| `vectorizer.pooling_strategy` | Embedding pooling strategy (`auto`, `mean`, or `cls`) |
+| `vectorizer.normalize_embeddings` | Whether to L2-normalize embeddings (`auto`, `true`, or `false`) |
+| `vectorizer.max_length` | Maximum token length for embedding inputs |
 | `top_k` | Number of recommended papers |
 | `log_level` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`) |
 

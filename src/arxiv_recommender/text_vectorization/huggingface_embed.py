@@ -4,30 +4,52 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
+from arxiv_recommender.embedding_config import (
+    AutoSetting,
+    NormalizeEmbeddingsSetting,
+    PoolingStrategy,
+    resolve_embedding_config,
+)
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
+from arxiv_recommender.text_vectorization.pooling import create_pooler
 
 
 class HuggingFaceEmbedding(TextEmbedder):
-    """Generic HuggingFace text embedder using mean pooled token embeddings."""
+    """Generic HuggingFace text embedder with model-aware embedding settings."""
 
     def __init__(
         self,
         model_name: str = "distilbert-base-uncased",
         cache_size: int = 1000,
+        pooling_strategy: PoolingStrategy | str = PoolingStrategy.AUTO,
+        normalize_embeddings: NormalizeEmbeddingsSetting | str = AutoSetting.AUTO,
+        max_length: int = 512,
     ) -> None:
         """Initializes tokenizer, model, and embedding cache.
 
         Args:
             model_name: HuggingFace model path or identifier.
             cache_size: Maximum number of embeddings to cache.
+            pooling_strategy: Token pooling strategy, or auto for known model profiles.
+            normalize_embeddings: Whether to L2-normalize embeddings, or auto for known profiles.
+            max_length: Maximum token length for truncation.
         """
         self.model_name = model_name
+        self.embedding_config = resolve_embedding_config(
+            model_name=model_name,
+            pooling_strategy=pooling_strategy,
+            normalize_embeddings=normalize_embeddings,
+        )
+        self.pooling_strategy = self.embedding_config.pooling_strategy.value
+        self.normalize_embeddings = self.embedding_config.normalize_embeddings
+        self._pooler = create_pooler(self.embedding_config.pooling_strategy)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
         self.model.eval()
-        self.max_length = 512
-        self.cache = EmbeddingCache(max_size=cache_size)
+        self.max_length = max_length
+        self.embedding_config_id = self.embedding_config.cache_namespace(model_name, max_length)
+        self.cache = EmbeddingCache(max_size=cache_size, namespace=self.embedding_config_id)
 
     def process(self, text: str) -> np.ndarray:
         """Generate an embedding vector for the given text.
@@ -68,28 +90,25 @@ class HuggingFaceEmbedding(TextEmbedder):
         return cast(dict[str, torch.Tensor], tokenized_text)
 
     def vectorize(self, tokenized_text: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Get embedding vectors for tokenized text with attention-aware mean pooling.
+        """Get embedding vectors for tokenized text.
 
         Args:
             tokenized_text: Tokenized HuggingFace model inputs.
 
         Returns:
-            Mean pooled text embedding as tensor.
+            Text embedding as tensor.
         """
         with torch.no_grad():
             outputs = self.model(**tokenized_text)
 
-        embeddings = outputs.last_hidden_state
+        embeddings = cast(torch.Tensor, outputs.last_hidden_state)
         attention_mask = tokenized_text["attention_mask"]
-        return self._mean_pool(embeddings, attention_mask)
+        pooled_embeddings = self._pooler(embeddings, attention_mask)
 
-    def _mean_pool(self, embeddings: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        mask = attention_mask.unsqueeze(-1).expand(embeddings.size()).float()
-        masked_embeddings = embeddings * mask
-        summed_embeddings = torch.sum(masked_embeddings, dim=1)
-        token_counts = torch.clamp(mask.sum(dim=1), min=1e-9)
-        sentence_embeddings = summed_embeddings / token_counts
-        return torch.mean(sentence_embeddings, dim=0, keepdim=False)
+        if self.normalize_embeddings:
+            pooled_embeddings = torch.nn.functional.normalize(pooled_embeddings, p=2, dim=1)
+
+        return pooled_embeddings[0]
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache performance statistics.

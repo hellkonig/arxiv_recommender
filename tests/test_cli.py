@@ -79,6 +79,11 @@ class TestCli(unittest.TestCase):
             class_name=self.config.vectorizer.class_name,
             model_name=self.config.vectorizer.model_name,
             cache_size=self.config.vectorizer.cache_size,
+            vectorizer_options={
+                "pooling_strategy": self.config.vectorizer.pooling_strategy,
+                "normalize_embeddings": self.config.vectorizer.normalize_embeddings,
+                "max_length": self.config.vectorizer.max_length,
+            },
         )
         mock_provider_class.assert_called_once_with(
             favorite_papers_path=self.config.favorite_papers_path,

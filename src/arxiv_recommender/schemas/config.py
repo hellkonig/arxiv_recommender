@@ -1,5 +1,10 @@
 from pydantic import BaseModel, Field, field_validator
 
+from arxiv_recommender.embedding_config import (
+    AutoSetting,
+    NormalizeEmbeddingsSetting,
+    PoolingStrategy,
+)
 from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
 
 
@@ -11,6 +16,19 @@ class VectorizerConfig(BaseModel):
         default=1000,
         ge=0,
         description="Maximum number of embeddings to cache",
+    )
+    pooling_strategy: PoolingStrategy = Field(
+        default=PoolingStrategy.AUTO,
+        description="Embedding pooling strategy, or auto for known model profiles",
+    )
+    normalize_embeddings: NormalizeEmbeddingsSetting = Field(
+        default=AutoSetting.AUTO,
+        description="Whether to L2-normalize embeddings, or auto for known model profiles",
+    )
+    max_length: int = Field(
+        default=512,
+        gt=0,
+        description="Maximum token length for embedding model inputs",
     )
 
     model_config = {"frozen": True}
