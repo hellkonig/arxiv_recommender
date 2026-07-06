@@ -1,22 +1,18 @@
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
+from arxiv_recommender.embedding_config import (
+    AutoSetting,
+    NormalizeEmbeddings,
+    PoolingStrategy,
+    resolve_embedding_config,
+)
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
-
-PoolingStrategy = Literal["auto", "mean", "cls"]
-ResolvedPoolingStrategy = Literal["mean", "cls"]
-NormalizeEmbeddings = bool | Literal["auto"]
-
-MODEL_EMBEDDING_PROFILES: dict[str, dict[str, ResolvedPoolingStrategy | bool]] = {
-    "BAAI/bge-small-en-v1.5": {
-        "pooling_strategy": "cls",
-        "normalize_embeddings": True,
-    },
-}
+from arxiv_recommender.text_vectorization.pooling import create_pooler
 
 
 class HuggingFaceEmbedding(TextEmbedder):
@@ -26,8 +22,8 @@ class HuggingFaceEmbedding(TextEmbedder):
         self,
         model_name: str = "distilbert-base-uncased",
         cache_size: int = 1000,
-        pooling_strategy: PoolingStrategy = "auto",
-        normalize_embeddings: NormalizeEmbeddings = "auto",
+        pooling_strategy: PoolingStrategy | str = PoolingStrategy.AUTO,
+        normalize_embeddings: NormalizeEmbeddings | str = AutoSetting.AUTO,
         max_length: int = 512,
     ) -> None:
         """Initializes tokenizer, model, and embedding cache.
@@ -40,19 +36,19 @@ class HuggingFaceEmbedding(TextEmbedder):
             max_length: Maximum token length for truncation.
         """
         self.model_name = model_name
-        self.pooling_strategy, self.normalize_embeddings = self._resolve_embedding_config(
+        self.embedding_config = resolve_embedding_config(
             model_name=model_name,
             pooling_strategy=pooling_strategy,
             normalize_embeddings=normalize_embeddings,
         )
+        self.pooling_strategy = self.embedding_config.pooling_strategy.value
+        self.normalize_embeddings = self.embedding_config.normalize_embeddings
+        self._pooler = create_pooler(self.embedding_config.pooling_strategy)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
         self.model.eval()
         self.max_length = max_length
-        self.embedding_config_id = (
-            f"model={model_name}|pooling={self.pooling_strategy}|"
-            f"normalize={self.normalize_embeddings}|max_length={max_length}"
-        )
+        self.embedding_config_id = self.embedding_config.cache_namespace(model_name, max_length)
         self.cache = EmbeddingCache(max_size=cache_size, namespace=self.embedding_config_id)
 
     def process(self, text: str) -> np.ndarray:
@@ -107,50 +103,12 @@ class HuggingFaceEmbedding(TextEmbedder):
 
         embeddings = cast(torch.Tensor, outputs.last_hidden_state)
         attention_mask = tokenized_text["attention_mask"]
-        if self.pooling_strategy == "cls":
-            pooled_embeddings = embeddings[:, 0]
-        else:
-            pooled_embeddings = self._mean_pool(embeddings, attention_mask)
+        pooled_embeddings = self._pooler(embeddings, attention_mask)
 
         if self.normalize_embeddings:
             pooled_embeddings = torch.nn.functional.normalize(pooled_embeddings, p=2, dim=1)
 
         return pooled_embeddings[0]
-
-    def _mean_pool(self, embeddings: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        mask = attention_mask.unsqueeze(-1).expand(embeddings.size()).float()
-        masked_embeddings = embeddings * mask
-        summed_embeddings = torch.sum(masked_embeddings, dim=1)
-        token_counts = torch.clamp(mask.sum(dim=1), min=1e-9)
-        return summed_embeddings / token_counts
-
-    def _resolve_embedding_config(
-        self,
-        model_name: str,
-        pooling_strategy: PoolingStrategy,
-        normalize_embeddings: NormalizeEmbeddings,
-    ) -> tuple[ResolvedPoolingStrategy, bool]:
-        profile = MODEL_EMBEDDING_PROFILES.get(model_name)
-        default_pooling: ResolvedPoolingStrategy = "mean"
-        default_normalize = False
-        if profile:
-            default_pooling = cast(ResolvedPoolingStrategy, profile["pooling_strategy"])
-            default_normalize = bool(profile["normalize_embeddings"])
-
-        resolved_pooling = default_pooling if pooling_strategy == "auto" else pooling_strategy
-        resolved_normalize = (
-            default_normalize if normalize_embeddings == "auto" else normalize_embeddings
-        )
-
-        if profile and (
-            resolved_pooling != default_pooling or resolved_normalize != default_normalize
-        ):
-            raise ValueError(
-                f"{model_name} requires pooling_strategy='{default_pooling}' "
-                f"and normalize_embeddings={default_normalize}."
-            )
-
-        return resolved_pooling, resolved_normalize
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache performance statistics.

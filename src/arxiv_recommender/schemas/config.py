@@ -1,11 +1,11 @@
-from typing import Literal
-
 from pydantic import BaseModel, Field, field_validator
 
+from arxiv_recommender.embedding_config import (
+    AutoSetting,
+    NormalizeEmbeddings,
+    PoolingStrategy,
+)
 from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
-
-EmbeddingPoolingStrategy = Literal["auto", "mean", "cls"]
-NormalizeEmbeddings = bool | Literal["auto"]
 
 
 class VectorizerConfig(BaseModel):
@@ -17,12 +17,12 @@ class VectorizerConfig(BaseModel):
         ge=0,
         description="Maximum number of embeddings to cache",
     )
-    pooling_strategy: EmbeddingPoolingStrategy = Field(
-        default="auto",
+    pooling_strategy: PoolingStrategy = Field(
+        default=PoolingStrategy.AUTO,
         description="Embedding pooling strategy, or auto for known model profiles",
     )
     normalize_embeddings: NormalizeEmbeddings = Field(
-        default="auto",
+        default=AutoSetting.AUTO,
         description="Whether to L2-normalize embeddings, or auto for known model profiles",
     )
     max_length: int = Field(

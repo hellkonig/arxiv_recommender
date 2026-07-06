@@ -93,7 +93,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
     def test_bge_small_rejects_incorrect_explicit_pooling(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "BAAI/bge-small-en-v1.5 requires pooling_strategy='cls'",
+            "pooling_strategy must be 'cls', got 'mean'",
         ):
             HuggingFaceEmbedding(
                 "BAAI/bge-small-en-v1.5",
@@ -104,7 +104,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
     def test_bge_small_rejects_incorrect_explicit_normalization(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "BAAI/bge-small-en-v1.5 requires pooling_strategy='cls'",
+            "normalize_embeddings must be True, got False",
         ):
             HuggingFaceEmbedding(
                 "BAAI/bge-small-en-v1.5",
