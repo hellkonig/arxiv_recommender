@@ -48,6 +48,22 @@ embedding contract.
 - Model quality is provisional until explicit user feedback supports a
   chronological comparison.
 
+## Implementation Status
+
+Implemented in PR #35.
+
+- The example configuration uses `BAAI/bge-small-en-v1.5`.
+- `auto` embedding settings resolve through a model profile.
+- The BGE-small profile uses CLS pooling and L2 normalization.
+- Explicit settings that conflict with the BGE-small profile are rejected.
+- In-memory embedding cache entries are namespaced by the resolved embedding
+  configuration.
+- Focused tests cover profile resolution, pooling, normalization, and cache
+  version separation.
+
+Representative embedding latency measurement remains tracked in
+`docs/roadmap.md`.
+
 ## Revisit When
 
 Revisit the active embedding model after enough explicit feedback exists to

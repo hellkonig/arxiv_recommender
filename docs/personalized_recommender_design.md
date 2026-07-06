@@ -69,6 +69,12 @@ local web interface
 of the title and abstract. Embeddings are L2-normalized and cached with an
 identifier that includes the model and embedding configuration.
 
+Embedding configuration is resolved before inference. User-facing config may
+use `auto` for pooling and normalization, but runtime embedding metadata uses
+the resolved values. The BGE-small profile resolves to CLS pooling with
+L2-normalized embeddings. Known model profiles reject incompatible explicit
+settings so cached embeddings and later evaluation remain reproducible.
+
 ## Feedback Semantics
 
 Only explicit binary feedback is used as a training or evaluation label:
