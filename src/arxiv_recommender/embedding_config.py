@@ -16,7 +16,7 @@ class AutoSetting(str, Enum):
     AUTO = "auto"
 
 
-NormalizeEmbeddings = bool | AutoSetting
+NormalizeEmbeddingsSetting = bool | AutoSetting
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ MODEL_EMBEDDING_PROFILES = {
 def resolve_embedding_config(
     model_name: str,
     pooling_strategy: PoolingStrategy | str = PoolingStrategy.AUTO,
-    normalize_embeddings: NormalizeEmbeddings | str = AutoSetting.AUTO,
+    normalize_embeddings: NormalizeEmbeddingsSetting | str = AutoSetting.AUTO,
 ) -> ResolvedEmbeddingConfig:
     """Resolve and validate model-specific embedding settings.
 
@@ -90,7 +90,9 @@ def resolve_embedding_config(
     return resolved_config
 
 
-def _coerce_normalize_embeddings(value: NormalizeEmbeddings | str) -> NormalizeEmbeddings:
+def _coerce_normalize_embeddings(
+    value: NormalizeEmbeddingsSetting | str,
+) -> NormalizeEmbeddingsSetting:
     if isinstance(value, bool):
         return value
     return AutoSetting(value)

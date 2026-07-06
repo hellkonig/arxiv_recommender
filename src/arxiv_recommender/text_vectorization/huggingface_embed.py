@@ -6,7 +6,7 @@ from transformers import AutoModel, AutoTokenizer
 
 from arxiv_recommender.embedding_config import (
     AutoSetting,
-    NormalizeEmbeddings,
+    NormalizeEmbeddingsSetting,
     PoolingStrategy,
     resolve_embedding_config,
 )
@@ -23,7 +23,7 @@ class HuggingFaceEmbedding(TextEmbedder):
         model_name: str = "distilbert-base-uncased",
         cache_size: int = 1000,
         pooling_strategy: PoolingStrategy | str = PoolingStrategy.AUTO,
-        normalize_embeddings: NormalizeEmbeddings | str = AutoSetting.AUTO,
+        normalize_embeddings: NormalizeEmbeddingsSetting | str = AutoSetting.AUTO,
         max_length: int = 512,
     ) -> None:
         """Initializes tokenizer, model, and embedding cache.

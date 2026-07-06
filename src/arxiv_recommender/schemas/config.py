@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from arxiv_recommender.embedding_config import (
     AutoSetting,
-    NormalizeEmbeddings,
+    NormalizeEmbeddingsSetting,
     PoolingStrategy,
 )
 from arxiv_recommender.utils.logging import SUPPORTED_LOG_LEVELS
@@ -21,7 +21,7 @@ class VectorizerConfig(BaseModel):
         default=PoolingStrategy.AUTO,
         description="Embedding pooling strategy, or auto for known model profiles",
     )
-    normalize_embeddings: NormalizeEmbeddings = Field(
+    normalize_embeddings: NormalizeEmbeddingsSetting = Field(
         default=AutoSetting.AUTO,
         description="Whether to L2-normalize embeddings, or auto for known model profiles",
     )
