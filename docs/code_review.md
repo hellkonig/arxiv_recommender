@@ -157,13 +157,14 @@ Status:
 - arXiv date validation enforces exact `YYYYMMDD` shape and real calendar dates.
 - arXiv category validation rejects malformed category/query-fragment inputs.
 - CLI date parsing validates before pipeline setup and preserves clear argparse errors.
-- Config loading moved out of `cli.py` into `utils.config_loader`, keeping CLI orchestration thinner.
+- Config loading moved out of the CLI interface into `utils.config_loader`,
+  keeping CLI orchestration thinner.
 
 Relevant code:
 
 - `src/arxiv_recommender/arxiv_paper_fetcher/utils.py`
 - `src/arxiv_recommender/arxiv_paper_fetcher/fetcher.py`
-- `src/arxiv_recommender/cli.py`
+- `src/arxiv_recommender/interfaces/cli.py`
 - `src/arxiv_recommender/utils/config_loader.py`
 - `tests/arxiv_paper_fetcher/test_utils.py`
 - `tests/arxiv_paper_fetcher/test_fetcher.py`
