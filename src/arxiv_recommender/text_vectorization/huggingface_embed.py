@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from arxiv_recommender.embedding_config import (
+from arxiv_recommender.text_vectorization.config import (
     AutoSetting,
     NormalizeEmbeddingsSetting,
     PoolingStrategy,

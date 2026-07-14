@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from arxiv_recommender.embedding_config import PoolingStrategy
+from arxiv_recommender.text_vectorization.config import PoolingStrategy
 from arxiv_recommender.text_vectorization.pooling import create_pooler
 
 

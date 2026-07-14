@@ -67,7 +67,7 @@ class JSONFormatter(logging.Formatter):
 def setup_logging(level: str = "INFO", json_format: bool = True) -> None:
     """Configure application-wide logging with a single handler.
 
-    Should be called once at application startup (e.g., in cli.py).
+    Should be called once at application startup.
     Sets up the root logger with a handler that outputs to stdout.
 
     Args:

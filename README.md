@@ -8,7 +8,7 @@
 arxiv_recommender/
 ├── src/
 │   └── arxiv_recommender/           # Python package
-│       ├── cli.py                    # CLI entry point
+│       ├── interfaces/               # CLI and other user-facing interfaces
 │       ├── arxiv_paper_fetcher/      # Fetches arXiv paper metadata
 │       ├── favorite_papers/           # Loads favorite papers from files or prompts
 │       ├── text_vectorization/       # Handles text embedding models
@@ -108,7 +108,7 @@ arxiv-recommend --config configs/config.json
 ### Option 2: Running from Source
 
 ```bash
-uv run python -m arxiv_recommender.cli --config configs/config.json
+uv run python -m arxiv_recommender.interfaces.cli --config configs/config.json
 ```
 
 ### Options

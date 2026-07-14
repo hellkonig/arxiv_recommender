@@ -3,7 +3,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from arxiv_recommender import cli
+from arxiv_recommender.interfaces import cli
 from arxiv_recommender.recommendation.types import RecommendationItem, RecommendationRunResult
 from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 
@@ -42,14 +42,14 @@ class TestCli(unittest.TestCase):
             candidate_papers_count=3,
         )
 
-    @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
-    @patch("arxiv_recommender.cli.load_config")
-    @patch("arxiv_recommender.cli.RecommendationPipeline")
-    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
-    @patch("arxiv_recommender.cli.MetricsCollector")
-    @patch("arxiv_recommender.cli.load_vectorization_model")
-    @patch("arxiv_recommender.cli.ArxivFetcher")
-    @patch("arxiv_recommender.cli.setup_logging")
+    @patch("arxiv_recommender.interfaces.cli.argparse.ArgumentParser.parse_args")
+    @patch("arxiv_recommender.interfaces.cli.load_config")
+    @patch("arxiv_recommender.interfaces.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.interfaces.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.interfaces.cli.MetricsCollector")
+    @patch("arxiv_recommender.interfaces.cli.load_vectorization_model")
+    @patch("arxiv_recommender.interfaces.cli.ArxivFetcher")
+    @patch("arxiv_recommender.interfaces.cli.setup_logging")
     def test_main_delegates_to_pipeline(
         self,
         mock_setup_logging: MagicMock,
@@ -98,15 +98,15 @@ class TestCli(unittest.TestCase):
         )
         mock_pipeline.run.assert_called_once_with(date_of_pulling_papers="20260522")
 
-    @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
-    @patch("arxiv_recommender.cli.load_config")
-    @patch("arxiv_recommender.cli.RecommendationPipeline")
-    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
-    @patch("arxiv_recommender.cli.MetricsCollector")
-    @patch("arxiv_recommender.cli.load_vectorization_model")
-    @patch("arxiv_recommender.cli.ArxivFetcher")
-    @patch("arxiv_recommender.cli.setup_logging")
-    @patch("arxiv_recommender.cli.logging.getLogger")
+    @patch("arxiv_recommender.interfaces.cli.argparse.ArgumentParser.parse_args")
+    @patch("arxiv_recommender.interfaces.cli.load_config")
+    @patch("arxiv_recommender.interfaces.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.interfaces.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.interfaces.cli.MetricsCollector")
+    @patch("arxiv_recommender.interfaces.cli.load_vectorization_model")
+    @patch("arxiv_recommender.interfaces.cli.ArxivFetcher")
+    @patch("arxiv_recommender.interfaces.cli.setup_logging")
+    @patch("arxiv_recommender.interfaces.cli.logging.getLogger")
     def test_main_logs_metrics_when_stats_enabled(
         self,
         mock_get_logger: MagicMock,
@@ -145,14 +145,14 @@ class TestCli(unittest.TestCase):
         mock_metrics_class.assert_called_once()
         mock_provider_class.assert_called_once()
 
-    @patch("arxiv_recommender.cli.argparse.ArgumentParser.parse_args")
-    @patch("arxiv_recommender.cli.load_config")
-    @patch("arxiv_recommender.cli.RecommendationPipeline")
-    @patch("arxiv_recommender.cli.FileFavoritePapersProvider")
-    @patch("arxiv_recommender.cli.MetricsCollector")
-    @patch("arxiv_recommender.cli.load_vectorization_model")
-    @patch("arxiv_recommender.cli.ArxivFetcher")
-    @patch("arxiv_recommender.cli.setup_logging")
+    @patch("arxiv_recommender.interfaces.cli.argparse.ArgumentParser.parse_args")
+    @patch("arxiv_recommender.interfaces.cli.load_config")
+    @patch("arxiv_recommender.interfaces.cli.RecommendationPipeline")
+    @patch("arxiv_recommender.interfaces.cli.FileFavoritePapersProvider")
+    @patch("arxiv_recommender.interfaces.cli.MetricsCollector")
+    @patch("arxiv_recommender.interfaces.cli.load_vectorization_model")
+    @patch("arxiv_recommender.interfaces.cli.ArxivFetcher")
+    @patch("arxiv_recommender.interfaces.cli.setup_logging")
     def test_main_uses_log_level_override(
         self,
         mock_setup_logging: MagicMock,

@@ -1,6 +1,6 @@
 import pytest
 
-from arxiv_recommender.embedding_config import (
+from arxiv_recommender.text_vectorization.config import (
     AutoSetting,
     PoolingStrategy,
     resolve_embedding_config,
