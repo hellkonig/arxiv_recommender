@@ -17,6 +17,7 @@ arxiv_recommender/
 │       └── utils/                    # Utility functions
 ├── configs/
 │   └── config.json.example           # Configuration template
+├── benchmarks/                       # Local engineering benchmarks
 ├── tests/                            # Unit tests
 ├── pyproject.toml                    # Project configuration
 └── README.md                         # Project documentation
@@ -127,6 +128,21 @@ If `favorite_papers.json` is missing or empty, the CLI will prompt you to enter 
 ```bash
 uv run python -m pytest
 ```
+
+## Benchmarking
+
+Measure embedding latency for representative title-and-abstract inputs:
+
+```bash
+uv run python benchmarks/embedding_latency.py \
+  --config configs/config.json \
+  --sizes 1 10 100 \
+  --repeats 3 \
+  --warmup 1
+```
+
+Benchmark results are local-machine-specific and are intended for comparing
+future model or embedding-pipeline changes.
 
 ## License
 

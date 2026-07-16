@@ -1,0 +1,145 @@
+import argparse
+import json
+from typing import Any
+
+import numpy as np
+import pytest
+
+from arxiv_recommender.schemas import AppConfig, VectorizerConfig
+from arxiv_recommender.text_vectorization.base import TextEmbedder
+from benchmarks.embedding_latency import (
+    benchmark_embeddings,
+    build_representative_inputs,
+    non_negative_int,
+    positive_int,
+)
+
+
+class FakeVectorizer(TextEmbedder):
+    def __init__(self) -> None:
+        self.processed_texts: list[str] = []
+
+    def process(self, text: str) -> np.ndarray:
+        self.processed_texts.append(text)
+        return np.array([1.0, 0.0])
+
+    def get_cache_stats(self) -> dict[str, Any]:
+        return {}
+
+
+class FakeTimer:
+    def __init__(self) -> None:
+        self.current = 0.0
+
+    def __call__(self) -> float:
+        self.current += 1.0
+        return self.current
+
+
+def make_config() -> AppConfig:
+    return AppConfig(
+        favorite_papers_path="favorite_papers.json",
+        vectorizer=VectorizerConfig(
+            module_name="huggingface_embed",
+            class_name="HuggingFaceEmbedding",
+            model_name="BAAI/bge-small-en-v1.5",
+            cache_size=1000,
+            pooling_strategy="auto",
+            normalize_embeddings="auto",
+            max_length=512,
+        ),
+        top_k=10,
+        log_level="INFO",
+    )
+
+
+def test_build_representative_inputs_returns_unique_paper_like_texts() -> None:
+    inputs = build_representative_inputs(3)
+
+    assert len(inputs) == 3
+    assert len(set(inputs)) == 3
+    assert all("Title:" in text for text in inputs)
+    assert all("Abstract:" in text for text in inputs)
+
+
+def test_build_representative_inputs_rejects_non_positive_count() -> None:
+    with pytest.raises(ValueError, match="count must be greater than 0"):
+        build_representative_inputs(0)
+
+
+def test_positive_int_accepts_positive_values() -> None:
+    assert positive_int("3") == 3
+
+
+def test_positive_int_rejects_zero() -> None:
+    with pytest.raises(argparse.ArgumentTypeError, match="value must be greater than 0"):
+        positive_int("0")
+
+
+def test_non_negative_int_accepts_zero() -> None:
+    assert non_negative_int("0") == 0
+
+
+def test_non_negative_int_rejects_negative_values() -> None:
+    with pytest.raises(
+        argparse.ArgumentTypeError,
+        match="value must be greater than or equal to 0",
+    ):
+        non_negative_int("-1")
+
+
+def test_benchmark_embeddings_returns_json_serializable_report() -> None:
+    fake_vectorizer = FakeVectorizer()
+
+    report = benchmark_embeddings(
+        config=make_config(),
+        sizes=[2],
+        repeats=2,
+        warmup=1,
+        vectorizer_factory=lambda _config: fake_vectorizer,
+        timer=FakeTimer(),
+    )
+
+    assert report["benchmark"] == "embedding_latency"
+    assert report["model"]["model_name"] == "BAAI/bge-small-en-v1.5"
+    assert report["model"]["cache_size"] == 0
+    assert report["model_load_seconds"] == 1.0
+    assert report["warmup_seconds"] == 1.0
+    assert report["results"] == [
+        {
+            "paper_count": 2,
+            "repeat_count": 2,
+            "mean_seconds": 1.0,
+            "best_seconds": 1.0,
+            "worst_seconds": 1.0,
+            "mean_papers_per_second": 2.0,
+        }
+    ]
+    assert len(fake_vectorizer.processed_texts) == 5
+    json.dumps(report)
+
+
+@pytest.mark.parametrize(
+    ("sizes", "repeats", "warmup", "match"),
+    [
+        ([], 1, 0, "sizes must not be empty"),
+        ([0], 1, 0, "all sizes must be greater than 0"),
+        ([1], 0, 0, "repeats must be greater than 0"),
+        ([1], 1, -1, "warmup must be greater than or equal to 0"),
+    ],
+)
+def test_benchmark_embeddings_validates_inputs(
+    sizes: list[int],
+    repeats: int,
+    warmup: int,
+    match: str,
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        benchmark_embeddings(
+            config=make_config(),
+            sizes=sizes,
+            repeats=repeats,
+            warmup=warmup,
+            vectorizer_factory=lambda _config: FakeVectorizer(),
+            timer=FakeTimer(),
+        )
