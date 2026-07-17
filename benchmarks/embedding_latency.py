@@ -24,13 +24,6 @@ Timer = Callable[[], float]
 VectorizerFactory = Callable[[AppConfig], TextEmbedder]
 
 
-class BenchmarkHelpFormatter(
-    argparse.ArgumentDefaultsHelpFormatter,
-    argparse.RawDescriptionHelpFormatter,
-):
-    """Show defaults while preserving example formatting."""
-
-
 def positive_int(value: str) -> int:
     """Parse a positive integer for argparse."""
     parsed_value = int(value)
@@ -193,7 +186,7 @@ def parse_args() -> argparse.Namespace:
             "Measure embedding latency for the configured vectorizer on "
             "representative title-and-abstract inputs."
         ),
-        formatter_class=BenchmarkHelpFormatter,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(
             """\
             Examples:
@@ -229,14 +222,14 @@ def parse_args() -> argparse.Namespace:
         type=positive_int,
         default=[1, 10, 100],
         metavar="N",
-        help="One or more paper counts to benchmark.",
+        help="One or more paper counts to benchmark. Default: 1 10 100.",
     )
     parser.add_argument(
         "--repeats",
         type=positive_int,
         default=3,
         metavar="N",
-        help="Measured runs to execute for each size.",
+        help="Measured runs to execute for each size. Default: 3.",
     )
     return parser.parse_args()
 
