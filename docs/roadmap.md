@@ -9,7 +9,7 @@ recommender. Accepted decisions are recorded separately in `docs/decisions/`.
 - [x] L2-normalize embeddings and verify similarity behavior.
 - [x] Version cache entries by model and embedding configuration.
 - [x] Add focused unit tests for pooling, normalization, and caching.
-- [ ] Measure embedding latency on representative title-and-abstract inputs.
+- [x] Measure embedding latency on representative title-and-abstract inputs.
 
 ## Milestone 2: Local Feedback Vertical Slice
 
