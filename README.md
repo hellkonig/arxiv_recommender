@@ -137,8 +137,7 @@ Measure embedding latency for representative title-and-abstract inputs:
 uv run python benchmarks/embedding_latency.py \
   --config configs/config.json \
   --sizes 1 10 100 \
-  --repeats 3 \
-  --warmup 1
+  --repeats 3
 ```
 
 Benchmark results are local-machine-specific and are intended for comparing

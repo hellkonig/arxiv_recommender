@@ -5,6 +5,7 @@ import json
 import platform
 import statistics
 import sys
+import textwrap
 from collections.abc import Callable, Sequence
 from time import perf_counter
 from typing import Any
@@ -23,19 +24,18 @@ Timer = Callable[[], float]
 VectorizerFactory = Callable[[AppConfig], TextEmbedder]
 
 
+class BenchmarkHelpFormatter(
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.RawDescriptionHelpFormatter,
+):
+    """Show defaults while preserving example formatting."""
+
+
 def positive_int(value: str) -> int:
     """Parse a positive integer for argparse."""
     parsed_value = int(value)
     if parsed_value <= 0:
         raise argparse.ArgumentTypeError("value must be greater than 0")
-    return parsed_value
-
-
-def non_negative_int(value: str) -> int:
-    """Parse a non-negative integer for argparse."""
-    parsed_value = int(value)
-    if parsed_value < 0:
-        raise argparse.ArgumentTypeError("value must be greater than or equal to 0")
     return parsed_value
 
 
@@ -76,7 +76,6 @@ def benchmark_embeddings(
     config: AppConfig,
     sizes: Sequence[int],
     repeats: int,
-    warmup: int,
     vectorizer_factory: VectorizerFactory = instantiate_vectorizer,
     timer: Timer = perf_counter,
 ) -> dict[str, Any]:
@@ -87,14 +86,12 @@ def benchmark_embeddings(
         raise ValueError("all sizes must be greater than 0")
     if repeats <= 0:
         raise ValueError("repeats must be greater than 0")
-    if warmup < 0:
-        raise ValueError("warmup must be greater than or equal to 0")
 
     load_start = timer()
     vectorizer = vectorizer_factory(config)
     model_load_seconds = timer() - load_start
 
-    warmup_seconds = run_warmup(vectorizer, warmup, timer)
+    warmup_seconds = run_warmup(vectorizer, timer)
     results = [
         benchmark_size(vectorizer=vectorizer, paper_count=size, repeats=repeats, timer=timer)
         for size in sizes
@@ -110,12 +107,9 @@ def benchmark_embeddings(
     }
 
 
-def run_warmup(vectorizer: TextEmbedder, warmup: int, timer: Timer) -> float:
-    """Run warmup embeddings before measuring benchmark sizes."""
-    if warmup == 0:
-        return 0.0
-
-    inputs = build_representative_inputs(warmup)
+def run_warmup(vectorizer: TextEmbedder, timer: Timer) -> float:
+    """Run one warmup embedding before measuring benchmark sizes."""
+    inputs = build_representative_inputs(1)
     start = timer()
     embed_inputs(vectorizer, inputs)
     return timer() - start
@@ -127,7 +121,12 @@ def benchmark_size(
     repeats: int,
     timer: Timer,
 ) -> dict[str, Any]:
-    """Measure repeated embedding runs for one input size."""
+    """Measure repeated embedding runs for one paper-count size.
+
+    Each repeat embeds a fresh set of deterministic inputs with a repeat marker
+    appended. That keeps cache-disabled measurements representative today and
+    prevents accidental cache hits if a future vectorizer ignores cache_size=0.
+    """
     elapsed_seconds = []
     for repeat_index in range(repeats):
         inputs = build_representative_inputs(paper_count)
@@ -189,26 +188,55 @@ def environment_metadata() -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Benchmark embedding latency.")
-    parser.add_argument("--config", required=True, help="Path to application config JSON.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Measure embedding latency for the configured vectorizer on "
+            "representative title-and-abstract inputs."
+        ),
+        formatter_class=BenchmarkHelpFormatter,
+        epilog=textwrap.dedent(
+            """\
+            Examples:
+              uv run python benchmarks/embedding_latency.py --config configs/config.json
+              uv run python benchmarks/embedding_latency.py --config configs/config.json --sizes 1 10 100 --repeats 3
+
+            Argument notes:
+              --sizes controls the paper-count batches to time. For example,
+                '--sizes 1 10 100' measures one-paper, ten-paper, and
+                hundred-paper runs.
+              --repeats controls how many measured runs are executed for each
+                size. The report includes mean, best, and worst seconds.
+
+            The benchmark runs one warmup embedding after model load. Warmup
+            time is reported separately as warmup_seconds and excluded from
+            per-size throughput results.
+            """
+        ),
+    )
+    parser.add_argument(
+        "--config",
+        required=True,
+        default=argparse.SUPPRESS,
+        metavar="PATH",
+        help=(
+            "Application config JSON to load. The benchmark uses its vectorizer "
+            "settings and disables the embedding cache for measurement."
+        ),
+    )
     parser.add_argument(
         "--sizes",
         nargs="+",
         type=positive_int,
         default=[1, 10, 100],
-        help="Paper counts to benchmark.",
+        metavar="N",
+        help="One or more paper counts to benchmark.",
     )
     parser.add_argument(
         "--repeats",
         type=positive_int,
         default=3,
-        help="Number of measured repeats per size.",
-    )
-    parser.add_argument(
-        "--warmup",
-        type=non_negative_int,
-        default=1,
-        help="Number of warmup embeddings before measured runs.",
+        metavar="N",
+        help="Measured runs to execute for each size.",
     )
     return parser.parse_args()
 
@@ -221,7 +249,6 @@ def main() -> None:
         config=config,
         sizes=args.sizes,
         repeats=args.repeats,
-        warmup=args.warmup,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 

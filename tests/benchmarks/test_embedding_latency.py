@@ -9,8 +9,8 @@ from arxiv_recommender.schemas import AppConfig, VectorizerConfig
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from benchmarks.embedding_latency import (
     benchmark_embeddings,
+    benchmark_size,
     build_representative_inputs,
-    non_negative_int,
     positive_int,
 )
 
@@ -76,18 +76,6 @@ def test_positive_int_rejects_zero() -> None:
         positive_int("0")
 
 
-def test_non_negative_int_accepts_zero() -> None:
-    assert non_negative_int("0") == 0
-
-
-def test_non_negative_int_rejects_negative_values() -> None:
-    with pytest.raises(
-        argparse.ArgumentTypeError,
-        match="value must be greater than or equal to 0",
-    ):
-        non_negative_int("-1")
-
-
 def test_benchmark_embeddings_returns_json_serializable_report() -> None:
     fake_vectorizer = FakeVectorizer()
 
@@ -95,7 +83,6 @@ def test_benchmark_embeddings_returns_json_serializable_report() -> None:
         config=make_config(),
         sizes=[2],
         repeats=2,
-        warmup=1,
         vectorizer_factory=lambda _config: fake_vectorizer,
         timer=FakeTimer(),
     )
@@ -119,19 +106,40 @@ def test_benchmark_embeddings_returns_json_serializable_report() -> None:
     json.dumps(report)
 
 
+def test_benchmark_size_measures_repeats_with_unique_inputs() -> None:
+    fake_vectorizer = FakeVectorizer()
+
+    result = benchmark_size(
+        vectorizer=fake_vectorizer,
+        paper_count=2,
+        repeats=2,
+        timer=FakeTimer(),
+    )
+
+    assert result == {
+        "paper_count": 2,
+        "repeat_count": 2,
+        "mean_seconds": 1.0,
+        "best_seconds": 1.0,
+        "worst_seconds": 1.0,
+        "mean_papers_per_second": 2.0,
+    }
+    assert len(fake_vectorizer.processed_texts) == 4
+    assert any("Benchmark repeat: 0" in text for text in fake_vectorizer.processed_texts)
+    assert any("Benchmark repeat: 1" in text for text in fake_vectorizer.processed_texts)
+
+
 @pytest.mark.parametrize(
-    ("sizes", "repeats", "warmup", "match"),
+    ("sizes", "repeats", "match"),
     [
-        ([], 1, 0, "sizes must not be empty"),
-        ([0], 1, 0, "all sizes must be greater than 0"),
-        ([1], 0, 0, "repeats must be greater than 0"),
-        ([1], 1, -1, "warmup must be greater than or equal to 0"),
+        ([], 1, "sizes must not be empty"),
+        ([0], 1, "all sizes must be greater than 0"),
+        ([1], 0, "repeats must be greater than 0"),
     ],
 )
 def test_benchmark_embeddings_validates_inputs(
     sizes: list[int],
     repeats: int,
-    warmup: int,
     match: str,
 ) -> None:
     with pytest.raises(ValueError, match=match):
@@ -139,7 +147,6 @@ def test_benchmark_embeddings_validates_inputs(
             config=make_config(),
             sizes=sizes,
             repeats=repeats,
-            warmup=warmup,
             vectorizer_factory=lambda _config: FakeVectorizer(),
             timer=FakeTimer(),
         )
