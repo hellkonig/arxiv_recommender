@@ -31,7 +31,22 @@ def apply_migrations(
     connection: sqlite3.Connection,
     migrations: list[Migration] | None = None,
 ) -> None:
-    """Apply pending SQLite migrations in version order."""
+    """Apply all pending SQLite migrations in version order.
+
+    The runner checks `schema_migrations` to decide which migrations have
+    already run. A new database runs every packaged migration from the first
+    version to the latest version. An existing database runs only migrations
+    that have not been recorded yet.
+
+    Args:
+        connection: Open SQLite connection.
+        migrations: Optional explicit migration list for tests. Production
+            callers should omit this so packaged SQL files are used.
+
+    Raises:
+        MigrationError: If migrations are out of order, duplicated, edited
+            after being applied, or fail while executing.
+    """
     connection.execute("PRAGMA foreign_keys = ON")
     _ensure_migrations_table(connection)
 

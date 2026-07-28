@@ -17,7 +17,8 @@ class TestMigrations(unittest.TestCase):
         self.addCleanup(connection.close)
         return connection
 
-    def test_apply_migrations_creates_initial_schema(self) -> None:
+    def test_apply_migrations_loads_packaged_sql_files_by_default(self) -> None:
+        """Default migration application uses the real packaged SQL files."""
         connection = self._connect_temp_database()
 
         apply_migrations(connection)
@@ -40,14 +41,51 @@ class TestMigrations(unittest.TestCase):
             table_names,
         )
 
-    def test_apply_migrations_is_idempotent(self) -> None:
+    def test_apply_migrations_skips_already_applied_migrations(self) -> None:
+        """Running migrations twice should not rerun SQL already recorded."""
         connection = self._connect_temp_database()
 
         apply_migrations(connection)
+        first_applied_row = connection.execute(
+            "SELECT version, applied_at FROM schema_migrations"
+        ).fetchone()
         apply_migrations(connection)
 
+        second_applied_row = connection.execute(
+            "SELECT version, applied_at FROM schema_migrations"
+        ).fetchone()
         migration_count = connection.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0]
         self.assertEqual(1, migration_count)
+        self.assertEqual(first_applied_row["version"], second_applied_row["version"])
+        self.assertEqual(first_applied_row["applied_at"], second_applied_row["applied_at"])
+
+    def test_apply_migrations_runs_pending_migrations_in_order(self) -> None:
+        connection = self._connect_temp_database()
+        initial_migration = Migration(
+            version=1,
+            name="create_example",
+            sql="CREATE TABLE example (id INTEGER PRIMARY KEY);",
+        )
+        pending_migration = Migration(
+            version=2,
+            name="add_example_name",
+            sql="ALTER TABLE example ADD COLUMN name TEXT;",
+        )
+
+        apply_migrations(connection, migrations=[initial_migration])
+        apply_migrations(connection, migrations=[initial_migration, pending_migration])
+
+        migration_versions = [
+            row["version"]
+            for row in connection.execute(
+                "SELECT version FROM schema_migrations ORDER BY version"
+            ).fetchall()
+        ]
+        example_columns = [
+            row["name"] for row in connection.execute("PRAGMA table_info(example)").fetchall()
+        ]
+        self.assertEqual([1, 2], migration_versions)
+        self.assertEqual(["id", "name"], example_columns)
 
     def test_apply_migrations_rejects_checksum_mismatch(self) -> None:
         connection = self._connect_temp_database()
@@ -67,7 +105,8 @@ class TestMigrations(unittest.TestCase):
         with self.assertRaisesRegex(MigrationError, "checksum does not match"):
             apply_migrations(connection, migrations=[changed_migration])
 
-    def test_connection_enforces_foreign_keys(self) -> None:
+    def test_schema_rejects_feedback_without_matching_impression(self) -> None:
+        """Feedback must reference a real impression."""
         connection = self._connect_temp_database()
 
         apply_migrations(connection)
@@ -81,7 +120,7 @@ class TestMigrations(unittest.TestCase):
                 (999, "interested", "2026-07-20T00:00:00+00:00"),
             )
 
-    def test_initial_schema_supports_feedback_event_flow(self) -> None:
+    def test_initial_schema_supports_recommendation_feedback_event_flow(self) -> None:
         connection = self._connect_temp_database()
         timestamp = "2026-07-20T00:00:00+00:00"
 
@@ -199,6 +238,25 @@ class TestMigrations(unittest.TestCase):
             (impression_id, "not_interested", "2026-07-20T00:05:00+00:00"),
         )
 
+        stored_paper = connection.execute(
+            "SELECT title FROM papers WHERE id = ?", (paper_id,)
+        ).fetchone()
+        stored_run = connection.execute(
+            """
+            SELECT embedding_model_version_id, ranker_model_version_id
+            FROM recommendation_runs
+            WHERE id = ?
+            """,
+            (recommendation_run_id,),
+        ).fetchone()
+        stored_impression = connection.execute(
+            """
+            SELECT recommendation_run_id, paper_id, displayed_rank, selection_source
+            FROM impressions
+            WHERE id = ?
+            """,
+            (impression_id,),
+        ).fetchone()
         feedback_values = [
             row["value"]
             for row in connection.execute(
@@ -206,6 +264,13 @@ class TestMigrations(unittest.TestCase):
                 (impression_id,),
             ).fetchall()
         ]
+        self.assertEqual("A Test Paper", stored_paper["title"])
+        self.assertEqual(embedding_model_id, stored_run["embedding_model_version_id"])
+        self.assertEqual(ranker_model_id, stored_run["ranker_model_version_id"])
+        self.assertEqual(recommendation_run_id, stored_impression["recommendation_run_id"])
+        self.assertEqual(paper_id, stored_impression["paper_id"])
+        self.assertEqual(1, stored_impression["displayed_rank"])
+        self.assertEqual("base_ranker", stored_impression["selection_source"])
         self.assertEqual(["interested", "not_interested"], feedback_values)
 
 

@@ -12,6 +12,9 @@ CREATE TABLE papers (
     last_seen_at TEXT NOT NULL
 );
 
+-- Store embedding and ranker provenance separately from recommendation runs so
+-- historical evaluation can identify which model contract produced each
+-- impression without duplicating config JSON on every run.
 CREATE TABLE model_versions (
     id INTEGER PRIMARY KEY,
     model_kind TEXT NOT NULL CHECK(model_kind IN ('embedding', 'ranker')),
