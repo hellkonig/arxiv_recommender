@@ -105,8 +105,8 @@ class TestMigrations(unittest.TestCase):
         with self.assertRaisesRegex(MigrationError, "checksum does not match"):
             apply_migrations(connection, migrations=[changed_migration])
 
-    def test_schema_rejects_feedback_without_matching_impression(self) -> None:
-        """Feedback must reference a real impression."""
+    def test_schema_rejects_feedback_with_unknown_impression_id(self) -> None:
+        """Feedback with a nonexistent impression_id must be rejected."""
         connection = self._connect_temp_database()
 
         apply_migrations(connection)

@@ -56,12 +56,21 @@ def apply_migrations(
     applied = _load_applied_migrations(connection)
     for migration in ordered_migrations:
         applied_checksum = applied.get(migration.version)
+
+        # Same version and checksum means this exact migration already ran.
+        # Skip it so repeated calls only apply newly added migration files.
         if applied_checksum == migration.checksum:
             continue
+
+        # Same version with a different checksum means a migration file was
+        # edited after being applied. Refuse to continue because the database
+        # history no longer matches the checked-in migration history.
         if applied_checksum is not None:
             raise MigrationError(
                 f"Applied migration {migration.version} checksum does not match local file."
             )
+
+        # No record exists for this version, so this migration is pending.
         _apply_migration(connection, migration)
 
 
