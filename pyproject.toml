@@ -37,6 +37,9 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
 
+[tool.setuptools.package-data]
+"arxiv_recommender.persistence.sql_migrations" = ["*.sql"]
+
 [[tool.mypy.overrides]]
 module = "requests"
 ignore_missing_imports = true

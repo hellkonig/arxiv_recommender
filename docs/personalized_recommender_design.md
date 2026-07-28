@@ -101,9 +101,10 @@ are:
 - `feedback`: explicit interested/not-interested events
 - `model_versions`: embedding and ranker identifiers and configuration
 
-The exact schema will be proposed and reviewed before implementation.
-Persisted embeddings must be invalidated or separated when the embedding
-model, pooling, normalization, or text-construction policy changes.
+The initial schema and migration runner are implemented under
+`src/arxiv_recommender/persistence/`. Persisted embeddings must be invalidated
+or separated when the embedding model, pooling, normalization, or
+text-construction policy changes.
 
 ## Personalization Strategy
 
