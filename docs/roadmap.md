@@ -13,7 +13,7 @@ recommender. Accepted decisions are recorded separately in `docs/decisions/`.
 
 ## Milestone 2: Local Feedback Vertical Slice
 
-- [ ] Define and review the SQLite schema and migration approach.
+- [x] Define and review the SQLite schema and migration approach.
 - [ ] Store papers, recommendation runs, and impressions.
 - [ ] Store explicit `interested` and `not_interested` feedback.
 - [ ] Record embedding model, ranker version, displayed rank, and score.
