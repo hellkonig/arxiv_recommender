@@ -13,7 +13,7 @@ class TestMigrations(unittest.TestCase):
         temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(temp_dir.cleanup)
         database_path = Path(temp_dir.name) / "recommendations.sqlite"
-        connection = connect_database(database_path)
+        connection: sqlite3.Connection = connect_database(database_path)
         self.addCleanup(connection.close)
         return connection
 
@@ -41,7 +41,7 @@ class TestMigrations(unittest.TestCase):
             table_names,
         )
 
-    def test_apply_migrations_skips_already_applied_migrations(self) -> None:
+    def test_apply_migrations_is_idempotent_for_already_applied_migrations(self) -> None:
         """Running migrations twice should not rerun SQL already recorded."""
         connection = self._connect_temp_database()
 
