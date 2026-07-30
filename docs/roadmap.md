@@ -21,6 +21,54 @@ recommender. Accepted decisions are recorded separately in `docs/decisions/`.
 - [ ] Add interested and not-interested controls with clear saved/error states.
 - [ ] Add persistence and workflow tests.
 
+### Planned Implementation PRs
+
+#### PR 1: Recommendation Persistence Repository
+
+Suggested branch: `feat/recommendation-persistence`
+
+- Add validated persistence input and output models.
+- Add a repository for recommendation runs.
+- Store only papers included in the displayed recommendation list.
+- Insert or reuse embedding and ranker model versions.
+- Insert recommendation runs and displayed impressions atomically.
+- Return structured recommendation-run and impression identifiers.
+- Roll back the complete operation when any persistence step fails.
+- Add integration tests using temporary migrated SQLite databases.
+
+This PR introduces the persistence API without changing CLI behavior.
+
+#### PR 2: Ranking Provenance
+
+Suggested branch: `feat/ranking-provenance`
+
+- Define developer-maintained metadata for the base ranker.
+- Record its algorithm name, semantic version, and canonical configuration.
+- Expose resolved embedding provenance through the text-embedding interface.
+- Store resolved pooling, normalization, maximum length, and text policy.
+- Add a typed impression selection source.
+- Update embedding implementations, test doubles, and provenance tests.
+
+Ranker versions are maintained by developers rather than configured by users.
+They change when scoring semantics or score-affecting implementation behavior
+changes.
+
+#### PR 3: Persist CLI Recommendation Runs
+
+Suggested branch: `feat/persist-cli-runs`
+
+- Add a configurable local database path.
+- Capture run start time, completion time, and effective requested date.
+- Connect to the database and apply migrations during CLI startup.
+- Persist a completed run before displaying its recommendations.
+- Store displayed rank, score, selection source, metrics, and model-version
+  references.
+- Add CLI and end-to-end workflow tests.
+- Document the database location and displayed-paper retention policy.
+
+After this PR, CLI recommendation history is durable. Explicit feedback
+controls remain a separate subsequent roadmap item.
+
 ## Milestone 3: Historical Evaluation
 
 - [ ] Implement chronological dataset construction from local feedback.
