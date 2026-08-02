@@ -101,10 +101,17 @@ are:
 - `feedback`: explicit interested/not-interested events
 - `model_versions`: embedding and ranker identifiers and configuration
 
-The initial schema and migration runner are implemented under
-`src/arxiv_recommender/persistence/`. Persisted embeddings must be invalidated
-or separated when the embedding model, pooling, normalization, or
-text-construction policy changes.
+The initial schema, migration runner, and recommendation repository are
+implemented under `src/arxiv_recommender/persistence/`. Repository inputs and
+outputs are validated with Pydantic, and each recommendation run is stored in
+one transaction so partial model, paper, run, or impression records are rolled
+back together. Only papers selected for display are retained as papers and
+impressions; the total fetched candidate count remains part of the run record.
+Embedding and ranker version records are reused through canonical configuration
+JSON. The repository is not connected to the CLI workflow yet.
+
+Persisted embeddings must be invalidated or separated when the embedding model,
+pooling, normalization, or text-construction policy changes.
 
 ## Personalization Strategy
 
