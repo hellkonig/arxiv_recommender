@@ -27,16 +27,19 @@ recommender. Accepted decisions are recorded separately in `docs/decisions/`.
 
 Suggested branch: `feat/recommendation-persistence`
 
-- Add validated persistence input and output models.
-- Add a repository for recommendation runs.
-- Store only papers included in the displayed recommendation list.
-- Insert or reuse embedding and ranker model versions.
-- Insert recommendation runs and displayed impressions atomically.
-- Return structured recommendation-run and impression identifiers.
-- Roll back the complete operation when any persistence step fails.
-- Add integration tests using temporary migrated SQLite databases.
+- [x] Add validated persistence input and output models.
+- [x] Add a repository for recommendation runs.
+- [x] Store only papers included in the displayed recommendation list.
+- [x] Insert or reuse embedding and ranker model versions.
+- [x] Insert recommendation runs and displayed impressions atomically.
+- [x] Return structured recommendation-run and impression identifiers.
+- [x] Roll back the complete operation when any persistence step fails.
+- [x] Add integration tests using temporary migrated SQLite databases.
 
-This PR introduces the persistence API without changing CLI behavior.
+Status: Implemented in PR #39.
+
+The repository API is complete, but the top-level persistence item remains open
+until PR 3 wires it into the CLI workflow.
 
 #### PR 2: Ranking Provenance
 

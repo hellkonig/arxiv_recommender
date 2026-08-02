@@ -13,7 +13,7 @@ arxiv_recommender/
 │       ├── favorite_papers/           # Loads favorite papers from files or prompts
 │       ├── text_vectorization/       # Handles text embedding models
 │       ├── recommendation/           # Core recommendation logic
-│       ├── persistence/              # Local SQLite schema and migrations
+│       ├── persistence/              # SQLite schema, migrations, and repositories
 │       ├── schemas/                  # Pydantic models
 │       └── utils/                    # Utility functions
 ├── configs/
