@@ -5,7 +5,8 @@ import numpy as np
 
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 from arxiv_recommender.favorite_papers import FavoritePapersProvider
-from arxiv_recommender.recommendation import RecommendationPipeline
+from arxiv_recommender.provenance import ModelProvenance
+from arxiv_recommender.recommendation import BASE_RANKER_PROVENANCE, RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 from arxiv_recommender.text_vectorization import TextEmbedder
 from arxiv_recommender.utils import MetricsCollector
@@ -47,6 +48,17 @@ class TestRecommendationPipeline(unittest.TestCase):
             "hit_rate": 0.333,
             "size": 2,
         }
+        self.embedding_provenance = ModelProvenance(
+            name="distilbert-base-uncased",
+            version="1.0.0",
+            config={
+                "pooling_strategy": "mean",
+                "normalize_embeddings": False,
+                "max_length": 512,
+                "text_policy": "title_abstract_single_space_v1",
+            },
+        )
+        self.mock_vectorizer.provenance = self.embedding_provenance
         self.metrics = MetricsCollector()
         self.favorite_papers_provider = MagicMock(spec=FavoritePapersProvider)
         self.favorite_papers_provider.get_papers.return_value = self.favorite_papers
@@ -109,6 +121,14 @@ class TestRecommendationPipeline(unittest.TestCase):
 
         self.assertIn("cache", result.metrics_summary)
         self.assertEqual(result.metrics_summary["cache"], self.mock_vectorizer.get_cache_stats())
+
+    def test_run_exposes_resolved_model_provenance(self) -> None:
+        pipeline = self._create_pipeline()
+
+        result = pipeline.run()
+
+        self.assertEqual(result.embedding_provenance, self.embedding_provenance)
+        self.assertEqual(result.ranker_provenance, BASE_RANKER_PROVENANCE)
 
     def test_run_reuses_injected_dependencies(self) -> None:
         pipeline = self._create_pipeline()

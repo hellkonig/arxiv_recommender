@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.text_vectorization import TextEmbedder
 from arxiv_recommender.utils.model_loader import (
     VectorizationModelLoadError,
@@ -18,6 +19,10 @@ class FakeEmbedder(TextEmbedder):
         self.cache_size = cache_size
         self.kwargs = kwargs
 
+    @property
+    def provenance(self) -> ModelProvenance:
+        return ModelProvenance(name=self.model_name, version="1.0.0")
+
     def process(self, text: str) -> np.ndarray:
         return np.array([len(text)])
 
@@ -28,6 +33,10 @@ class FakeEmbedder(TextEmbedder):
 class BrokenEmbedder(TextEmbedder):
     def __init__(self, model_name: str, cache_size: int) -> None:
         raise ValueError("model cannot be loaded")
+
+    @property
+    def provenance(self) -> ModelProvenance:
+        return ModelProvenance(name="broken", version="1.0.0")
 
     def process(self, text: str) -> np.ndarray:
         return np.array([len(text)])

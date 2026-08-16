@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
+from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.text_vectorization.config import (
     AutoSetting,
     NormalizeEmbeddingsSetting,
@@ -13,6 +14,10 @@ from arxiv_recommender.text_vectorization.config import (
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
 from arxiv_recommender.text_vectorization.pooling import create_pooler
+from arxiv_recommender.text_vectorization.text_policy import ACTIVE_PAPER_TEXT_POLICY
+
+
+HUGGINGFACE_EMBEDDING_CONTRACT_VERSION = "1.0.0"
 
 
 class HuggingFaceEmbedding(TextEmbedder):
@@ -50,6 +55,20 @@ class HuggingFaceEmbedding(TextEmbedder):
         self.max_length = max_length
         self.embedding_config_id = self.embedding_config.cache_namespace(model_name, max_length)
         self.cache = EmbeddingCache(max_size=cache_size, namespace=self.embedding_config_id)
+
+    @property
+    def provenance(self) -> ModelProvenance:
+        """Return the resolved embedding model contract used for inference."""
+        return ModelProvenance(
+            name=self.model_name,
+            version=HUGGINGFACE_EMBEDDING_CONTRACT_VERSION,
+            config={
+                "pooling_strategy": self.embedding_config.pooling_strategy.value,
+                "normalize_embeddings": self.embedding_config.normalize_embeddings,
+                "max_length": self.max_length,
+                "text_policy": ACTIVE_PAPER_TEXT_POLICY.value,
+            },
+        )
 
     def process(self, text: str) -> np.ndarray:
         """Generate an embedding vector for the given text.

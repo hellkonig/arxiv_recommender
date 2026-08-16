@@ -3,7 +3,11 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from arxiv_recommender.recommendation.recommendation import Recommender
+from arxiv_recommender.provenance import SelectionSource
+from arxiv_recommender.recommendation.recommendation import (
+    BASE_RANKER_PROVENANCE,
+    Recommender,
+)
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.text_vectorization import TextEmbedder
 
@@ -55,6 +59,25 @@ class TestRecommender(unittest.TestCase):
         self.assertEqual(len(recommendations), len(self.candidate_papers))
         self.assertEqual(
             sorted(recommendations, key=lambda item: item.score, reverse=True), recommendations
+        )
+        self.assertTrue(
+            all(item.selection_source is SelectionSource.BASE_RANKER for item in recommendations)
+        )
+
+    def test_exposes_versioned_base_ranker_provenance(self) -> None:
+        self.assertEqual(self.recommender.provenance, BASE_RANKER_PROVENANCE)
+        self.assertEqual(
+            self.recommender.provenance.model_dump(),
+            {
+                "name": "max_favorite_cosine_similarity",
+                "version": "1.0.0",
+                "config": {
+                    "similarity": "cosine",
+                    "favorite_aggregation": "max",
+                    "sort_order": "descending",
+                    "tie_breaker": "candidate_input_order",
+                },
+            },
         )
 
     def test_recommend_by_papers_preserves_metadata(self) -> None:

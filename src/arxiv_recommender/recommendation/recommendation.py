@@ -3,10 +3,24 @@ from time import perf_counter
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+from arxiv_recommender.provenance import ModelProvenance, SelectionSource
 from arxiv_recommender.recommendation.types import RecommendationItem
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.text_vectorization import TextEmbedder
+from arxiv_recommender.text_vectorization.text_policy import paper_to_embedding_text
 from arxiv_recommender.utils.metrics import MetricsCollector
+
+
+BASE_RANKER_PROVENANCE = ModelProvenance(
+    name="max_favorite_cosine_similarity",
+    version="1.0.0",
+    config={
+        "similarity": "cosine",
+        "favorite_aggregation": "max",
+        "sort_order": "descending",
+        "tie_breaker": "candidate_input_order",
+    },
+)
 
 
 class Recommender:
@@ -42,6 +56,11 @@ class Recommender:
         self.metrics = metrics
         self.favorite_paper_embeddings = self._compute_favorite_embeddings(favorite_papers)
 
+    @property
+    def provenance(self) -> ModelProvenance:
+        """Return the developer-maintained base-ranker contract."""
+        return BASE_RANKER_PROVENANCE
+
     def _compute_favorite_embeddings(self, papers: list[Paper]) -> np.ndarray:
         """Computes embeddings for the user's favorite papers.
 
@@ -55,7 +74,7 @@ class Recommender:
         embeddings = []
         for paper in papers:
             start = perf_counter()
-            embedding = self.vectorizer.process(paper.title + " " + paper.abstract)
+            embedding = self.vectorizer.process(paper_to_embedding_text(paper))
             if self.metrics:
                 self.metrics.add_embedding_latency(perf_counter() - start)
             embeddings.append(embedding)
@@ -81,7 +100,7 @@ class Recommender:
         embedding_list = []
         for paper in candidate_papers:
             start = perf_counter()
-            embedding = self.vectorizer.process(paper.title + " " + paper.abstract)
+            embedding = self.vectorizer.process(paper_to_embedding_text(paper))
             if self.metrics:
                 self.metrics.add_embedding_latency(perf_counter() - start)
             embedding_list.append(embedding)
@@ -100,7 +119,12 @@ class Recommender:
 
         # Extract ranked papers with similarity scores
         ranked_papers = [
-            RecommendationItem(paper=paper, score=float(score)) for paper, score in sorted_papers
+            RecommendationItem(
+                paper=paper,
+                score=float(score),
+                selection_source=SelectionSource.BASE_RANKER,
+            )
+            for paper, score in sorted_papers
         ]
 
         return ranked_papers[:top_k] if top_k else ranked_papers

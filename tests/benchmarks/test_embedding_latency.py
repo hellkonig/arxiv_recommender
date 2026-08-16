@@ -5,8 +5,10 @@ from typing import Any
 import numpy as np
 import pytest
 
+from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.schemas import AppConfig, VectorizerConfig
 from arxiv_recommender.text_vectorization.base import TextEmbedder
+from arxiv_recommender.text_vectorization.config import AutoSetting, PoolingStrategy
 from benchmarks.embedding_latency import (
     benchmark_embeddings,
     benchmark_size,
@@ -18,6 +20,10 @@ from benchmarks.embedding_latency import (
 class FakeVectorizer(TextEmbedder):
     def __init__(self) -> None:
         self.processed_texts: list[str] = []
+
+    @property
+    def provenance(self) -> ModelProvenance:
+        return ModelProvenance(name="fake", version="1.0.0")
 
     def process(self, text: str) -> np.ndarray:
         self.processed_texts.append(text)
@@ -44,8 +50,8 @@ def make_config() -> AppConfig:
             class_name="HuggingFaceEmbedding",
             model_name="BAAI/bge-small-en-v1.5",
             cache_size=1000,
-            pooling_strategy="auto",
-            normalize_embeddings="auto",
+            pooling_strategy=PoolingStrategy.AUTO,
+            normalize_embeddings=AutoSetting.AUTO,
             max_length=512,
         ),
         top_k=10,

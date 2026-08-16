@@ -90,6 +90,35 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         self.assertIn("pooling=cls", embedder.embedding_config_id)
         self.assertIn("normalize=True", embedder.embedding_config_id)
 
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoTokenizer.from_pretrained")
+    def test_provenance_uses_resolved_embedding_contract(
+        self, mock_tokenizer_from_pretrained: Any, mock_model_from_pretrained: Any
+    ) -> None:
+        mock_tokenizer_from_pretrained.return_value = MagicMock()
+        mock_model_from_pretrained.return_value = MagicMock()
+
+        embedder = HuggingFaceEmbedding(
+            "BAAI/bge-small-en-v1.5",
+            pooling_strategy="auto",
+            normalize_embeddings="auto",
+            max_length=256,
+        )
+
+        self.assertEqual(
+            embedder.provenance.model_dump(),
+            {
+                "name": "BAAI/bge-small-en-v1.5",
+                "version": "1.0.0",
+                "config": {
+                    "pooling_strategy": "cls",
+                    "normalize_embeddings": True,
+                    "max_length": 256,
+                    "text_policy": "title_abstract_single_space_v1",
+                },
+            },
+        )
+
     def test_bge_small_rejects_incorrect_explicit_pooling(self) -> None:
         with self.assertRaisesRegex(
             ValueError,

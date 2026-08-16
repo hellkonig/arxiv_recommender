@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from arxiv_recommender.interfaces import cli
+from arxiv_recommender.provenance import ModelProvenance, SelectionSource
 from arxiv_recommender.recommendation.types import RecommendationItem, RecommendationRunResult
 from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 
@@ -31,15 +32,25 @@ class TestCli(unittest.TestCase):
                         abstract="Abstract 1",
                     ),
                     score=0.9,
+                    selection_source=SelectionSource.BASE_RANKER,
                 ),
                 RecommendationItem(
                     paper=Paper(title="Paper 2", abstract="Abstract 2"),
                     score=0.8,
+                    selection_source=SelectionSource.BASE_RANKER,
                 ),
             ],
             metrics_summary={"cache": {"hits": 1}},
             favorite_papers_count=2,
             candidate_papers_count=3,
+            embedding_provenance=ModelProvenance(
+                name="distilbert-base-uncased",
+                version="1.0.0",
+            ),
+            ranker_provenance=ModelProvenance(
+                name="max_favorite_cosine_similarity",
+                version="1.0.0",
+            ),
         )
 
     @patch("arxiv_recommender.interfaces.cli.argparse.ArgumentParser.parse_args")
