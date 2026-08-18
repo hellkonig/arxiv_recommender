@@ -6,9 +6,10 @@ import numpy as np
 from arxiv_recommender.arxiv_paper_fetcher.fetcher import ArxivFetcher
 from arxiv_recommender.favorite_papers import FavoritePapersProvider
 from arxiv_recommender.provenance import ModelProvenance
-from arxiv_recommender.recommendation import BASE_RANKER_PROVENANCE, RecommendationPipeline
+from arxiv_recommender.recommendation import RecommendationPipeline
 from arxiv_recommender.schemas import AppConfig, Paper, VectorizerConfig
 from arxiv_recommender.text_vectorization import TextEmbedder
+from arxiv_recommender.text_vectorization.text_policy import TitleAbstractTextPolicy
 from arxiv_recommender.utils import MetricsCollector
 
 
@@ -42,6 +43,7 @@ class TestRecommendationPipeline(unittest.TestCase):
         self.mock_fetcher.get_daily_papers.return_value = self.daily_papers
         self.mock_vectorizer = MagicMock(spec=TextEmbedder)
         self.mock_vectorizer.process.side_effect = lambda text: np.array([len(text)])
+        self.mock_vectorizer.text_policy = TitleAbstractTextPolicy()
         self.mock_vectorizer.get_cache_stats.return_value = {
             "hits": 1,
             "misses": 2,
@@ -55,7 +57,21 @@ class TestRecommendationPipeline(unittest.TestCase):
                 "pooling_strategy": "mean",
                 "normalize_embeddings": False,
                 "max_length": 512,
-                "text_policy": "title_abstract_single_space_v1",
+                "text_policy": {
+                    "name": "title_abstract",
+                    "version": "1.0.0",
+                    "config": {"separator": " "},
+                },
+            },
+        )
+        self.ranker_provenance = ModelProvenance(
+            name="max_favorite_cosine_similarity",
+            version="1.0.0",
+            config={
+                "similarity": "cosine",
+                "favorite_aggregation": "max",
+                "sort_order": "descending",
+                "tie_breaker": "candidate_input_order",
             },
         )
         self.mock_vectorizer.provenance = self.embedding_provenance
@@ -128,7 +144,7 @@ class TestRecommendationPipeline(unittest.TestCase):
         result = pipeline.run()
 
         self.assertEqual(result.embedding_provenance, self.embedding_provenance)
-        self.assertEqual(result.ranker_provenance, BASE_RANKER_PROVENANCE)
+        self.assertEqual(result.ranker_provenance, self.ranker_provenance)
 
     def test_run_reuses_injected_dependencies(self) -> None:
         pipeline = self._create_pipeline()

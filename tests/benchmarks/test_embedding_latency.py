@@ -9,6 +9,10 @@ from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.schemas import AppConfig, VectorizerConfig
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.config import AutoSetting, PoolingStrategy
+from arxiv_recommender.text_vectorization.text_policy import (
+    PaperTextPolicy,
+    TitleAbstractTextPolicy,
+)
 from benchmarks.embedding_latency import (
     benchmark_embeddings,
     benchmark_size,
@@ -24,6 +28,10 @@ class FakeVectorizer(TextEmbedder):
     @property
     def provenance(self) -> ModelProvenance:
         return ModelProvenance(name="fake", version="1.0.0")
+
+    @property
+    def text_policy(self) -> PaperTextPolicy:
+        return TitleAbstractTextPolicy()
 
     def process(self, text: str) -> np.ndarray:
         self.processed_texts.append(text)

@@ -7,6 +7,10 @@ import numpy as np
 
 from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.text_vectorization import TextEmbedder
+from arxiv_recommender.text_vectorization.text_policy import (
+    PaperTextPolicy,
+    TitleAbstractTextPolicy,
+)
 from arxiv_recommender.utils.model_loader import (
     VectorizationModelLoadError,
     load_vectorization_model,
@@ -23,6 +27,10 @@ class FakeEmbedder(TextEmbedder):
     def provenance(self) -> ModelProvenance:
         return ModelProvenance(name=self.model_name, version="1.0.0")
 
+    @property
+    def text_policy(self) -> PaperTextPolicy:
+        return TitleAbstractTextPolicy()
+
     def process(self, text: str) -> np.ndarray:
         return np.array([len(text)])
 
@@ -37,6 +45,10 @@ class BrokenEmbedder(TextEmbedder):
     @property
     def provenance(self) -> ModelProvenance:
         return ModelProvenance(name="broken", version="1.0.0")
+
+    @property
+    def text_policy(self) -> PaperTextPolicy:
+        return TitleAbstractTextPolicy()
 
     def process(self, text: str) -> np.ndarray:
         return np.array([len(text)])

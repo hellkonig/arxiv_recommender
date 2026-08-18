@@ -1,23 +1,66 @@
-"""Canonical paper text construction for embedding inputs."""
+"""Extensible paper text construction for embedding inputs."""
 
-from __future__ import annotations
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import ClassVar, Protocol
 
-from enum import Enum
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from arxiv_recommender.schemas import Paper
+from pydantic import JsonValue
 
 
-class PaperTextPolicy(str, Enum):
-    """Versioned policies for constructing text from paper metadata."""
+class PaperTextInput(Protocol):
+    """Paper fields required by the current text-policy contract."""
 
-    TITLE_ABSTRACT_SINGLE_SPACE_V1 = "title_abstract_single_space_v1"
-
-
-ACTIVE_PAPER_TEXT_POLICY = PaperTextPolicy.TITLE_ABSTRACT_SINGLE_SPACE_V1
+    title: str
+    abstract: str
 
 
-def paper_to_embedding_text(paper: Paper) -> str:
-    """Construct embedding text using the active title-and-abstract policy."""
-    return f"{paper.title} {paper.abstract}"
+class PaperTextPolicy(ABC):
+    """Construct model input text and describe the applied policy."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Return the stable policy identifier."""
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        """Return the semantic version of the policy behavior."""
+
+    @property
+    @abstractmethod
+    def config(self) -> dict[str, JsonValue]:
+        """Return score-affecting policy configuration."""
+
+    @abstractmethod
+    def build_text(self, paper: PaperTextInput) -> str:
+        """Construct embedding input from paper metadata."""
+
+
+@dataclass(frozen=True)
+class TitleAbstractTextPolicy(PaperTextPolicy):
+    """Join the title and abstract with a configurable separator."""
+
+    NAME: ClassVar[str] = "title_abstract"
+    VERSION: ClassVar[str] = "1.0.0"
+
+    separator: str = " "
+
+    @property
+    def name(self) -> str:
+        """Return the stable policy identifier."""
+        return self.NAME
+
+    @property
+    def version(self) -> str:
+        """Return the semantic version of this policy behavior."""
+        return self.VERSION
+
+    @property
+    def config(self) -> dict[str, JsonValue]:
+        """Return configuration needed to reproduce the policy."""
+        return {"separator": self.separator}
+
+    def build_text(self, paper: PaperTextInput) -> str:
+        """Construct text with the title before the abstract."""
+        return f"{paper.title}{self.separator}{paper.abstract}"

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 
 from arxiv_recommender.text_vectorization.huggingface_embed import HuggingFaceEmbedding
+from arxiv_recommender.text_vectorization.text_policy import TitleAbstractTextPolicy
 
 
 class TestHuggingFaceEmbedding(unittest.TestCase):
@@ -114,8 +115,33 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
                     "pooling_strategy": "cls",
                     "normalize_embeddings": True,
                     "max_length": 256,
-                    "text_policy": "title_abstract_single_space_v1",
+                    "text_policy": {
+                        "name": "title_abstract",
+                        "version": "1.0.0",
+                        "config": {"separator": " "},
+                    },
                 },
+            },
+        )
+
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoTokenizer.from_pretrained")
+    def test_provenance_uses_injected_text_policy(
+        self, mock_tokenizer_from_pretrained: Any, mock_model_from_pretrained: Any
+    ) -> None:
+        mock_tokenizer_from_pretrained.return_value = MagicMock()
+        mock_model_from_pretrained.return_value = MagicMock()
+        policy = TitleAbstractTextPolicy(separator="\n")
+
+        embedder = HuggingFaceEmbedding("test-model", text_policy=policy)
+
+        self.assertIs(embedder.text_policy, policy)
+        self.assertEqual(
+            embedder.provenance.config["text_policy"],
+            {
+                "name": "title_abstract",
+                "version": "1.0.0",
+                "config": {"separator": "\n"},
             },
         )
 

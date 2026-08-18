@@ -1,4 +1,4 @@
-"""Shared recommendation provenance contracts."""
+"""Cross-layer provenance contracts shared without subsystem coupling."""
 
 from enum import Enum
 
@@ -24,9 +24,9 @@ class ModelProvenance(BaseModel):
 
     @field_validator("name", "version")
     @classmethod
-    def validate_non_empty_identity(cls, value: str) -> str:
+    def validate_non_empty_identity(cls, identity_value: str) -> str:
         """Normalize and reject blank model identity fields."""
-        normalized_value = value.strip()
+        normalized_value = identity_value.strip()
         if not normalized_value:
             raise ValueError("Model name and version must not be blank.")
         return normalized_value

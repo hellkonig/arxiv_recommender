@@ -4,12 +4,10 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from arxiv_recommender.provenance import SelectionSource
-from arxiv_recommender.recommendation.recommendation import (
-    BASE_RANKER_PROVENANCE,
-    Recommender,
-)
+from arxiv_recommender.recommendation.recommendation import Recommender
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.text_vectorization import TextEmbedder
+from arxiv_recommender.text_vectorization.text_policy import TitleAbstractTextPolicy
 
 
 class TestRecommender(unittest.TestCase):
@@ -19,6 +17,8 @@ class TestRecommender(unittest.TestCase):
         """Setup mock vectorizer and sample papers for testing."""
         self.mock_vectorizer = MagicMock(spec=TextEmbedder)
         self.mock_vectorizer.process.side_effect = lambda text: np.array([len(text)])
+        self.text_policy = TitleAbstractTextPolicy()
+        self.mock_vectorizer.text_policy = self.text_policy
 
         self.favorite_papers = [
             Paper(title="AI Research", abstract="This paper discusses AI."),
@@ -61,11 +61,14 @@ class TestRecommender(unittest.TestCase):
             sorted(recommendations, key=lambda item: item.score, reverse=True), recommendations
         )
         self.assertTrue(
-            all(item.selection_source is SelectionSource.BASE_RANKER for item in recommendations)
+            all(
+                item.selection_source is self.recommender.selection_source
+                for item in recommendations
+            )
         )
+        self.assertIs(self.recommender.selection_source, SelectionSource.BASE_RANKER)
 
     def test_exposes_versioned_base_ranker_provenance(self) -> None:
-        self.assertEqual(self.recommender.provenance, BASE_RANKER_PROVENANCE)
         self.assertEqual(
             self.recommender.provenance.model_dump(),
             {
@@ -78,6 +81,19 @@ class TestRecommender(unittest.TestCase):
                     "tie_breaker": "candidate_input_order",
                 },
             },
+        )
+
+    def test_uses_the_vectorizers_injected_text_policy(self) -> None:
+        custom_policy = TitleAbstractTextPolicy(separator="\n")
+        self.mock_vectorizer.text_policy = custom_policy
+        self.mock_vectorizer.process.reset_mock()
+
+        Recommender(vectorizer=self.mock_vectorizer, favorite_papers=self.favorite_papers)
+
+        processed_texts = [call.args[0] for call in self.mock_vectorizer.process.call_args_list]
+        self.assertEqual(
+            processed_texts,
+            [custom_policy.build_text(paper) for paper in self.favorite_papers],
         )
 
     def test_recommend_by_papers_preserves_metadata(self) -> None:

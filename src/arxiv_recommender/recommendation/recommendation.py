@@ -1,26 +1,15 @@
 from time import perf_counter
+from typing import ClassVar
 
 import numpy as np
+from pydantic import JsonValue
 from sklearn.metrics.pairwise import cosine_similarity
 
 from arxiv_recommender.provenance import ModelProvenance, SelectionSource
 from arxiv_recommender.recommendation.types import RecommendationItem
 from arxiv_recommender.schemas import Paper
 from arxiv_recommender.text_vectorization import TextEmbedder
-from arxiv_recommender.text_vectorization.text_policy import paper_to_embedding_text
 from arxiv_recommender.utils.metrics import MetricsCollector
-
-
-BASE_RANKER_PROVENANCE = ModelProvenance(
-    name="max_favorite_cosine_similarity",
-    version="1.0.0",
-    config={
-        "similarity": "cosine",
-        "favorite_aggregation": "max",
-        "sort_order": "descending",
-        "tie_breaker": "candidate_input_order",
-    },
-)
 
 
 class Recommender:
@@ -31,6 +20,18 @@ class Recommender:
         favorite_paper_embeddings: Precomputed embeddings for favorite papers.
         metrics: Optional metrics collector for observability.
     """
+
+    # These identifiers describe the scoring behavior implemented by this
+    # class. Bump the version whenever that behavior changes.
+    RANKER_NAME: ClassVar[str] = "max_favorite_cosine_similarity"
+    RANKER_VERSION: ClassVar[str] = "1.0.0"
+    RANKER_CONFIG: ClassVar[dict[str, JsonValue]] = {
+        "similarity": "cosine",
+        "favorite_aggregation": "max",
+        "sort_order": "descending",
+        "tie_breaker": "candidate_input_order",
+    }
+    SELECTION_SOURCE: ClassVar[SelectionSource] = SelectionSource.BASE_RANKER
 
     def __init__(
         self,
@@ -59,7 +60,16 @@ class Recommender:
     @property
     def provenance(self) -> ModelProvenance:
         """Return the developer-maintained base-ranker contract."""
-        return BASE_RANKER_PROVENANCE
+        return ModelProvenance(
+            name=self.RANKER_NAME,
+            version=self.RANKER_VERSION,
+            config=dict(self.RANKER_CONFIG),
+        )
+
+    @property
+    def selection_source(self) -> SelectionSource:
+        """Return the source assigned to recommendations from this ranker."""
+        return self.SELECTION_SOURCE
 
     def _compute_favorite_embeddings(self, papers: list[Paper]) -> np.ndarray:
         """Computes embeddings for the user's favorite papers.
@@ -74,7 +84,7 @@ class Recommender:
         embeddings = []
         for paper in papers:
             start = perf_counter()
-            embedding = self.vectorizer.process(paper_to_embedding_text(paper))
+            embedding = self.vectorizer.process(self.vectorizer.text_policy.build_text(paper))
             if self.metrics:
                 self.metrics.add_embedding_latency(perf_counter() - start)
             embeddings.append(embedding)
@@ -100,7 +110,7 @@ class Recommender:
         embedding_list = []
         for paper in candidate_papers:
             start = perf_counter()
-            embedding = self.vectorizer.process(paper_to_embedding_text(paper))
+            embedding = self.vectorizer.process(self.vectorizer.text_policy.build_text(paper))
             if self.metrics:
                 self.metrics.add_embedding_latency(perf_counter() - start)
             embedding_list.append(embedding)
@@ -122,7 +132,7 @@ class Recommender:
             RecommendationItem(
                 paper=paper,
                 score=float(score),
-                selection_source=SelectionSource.BASE_RANKER,
+                selection_source=self.selection_source,
             )
             for paper, score in sorted_papers
         ]
