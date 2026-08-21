@@ -45,16 +45,31 @@ until PR 3 wires it into the CLI workflow.
 
 Suggested branch: `feat/ranking-provenance`
 
-- Define developer-maintained metadata for the base ranker.
-- Record its algorithm name, semantic version, and canonical configuration.
-- Expose resolved embedding provenance through the text-embedding interface.
-- Store resolved pooling, normalization, maximum length, and text policy.
-- Add a typed impression selection source.
-- Update embedding implementations, test doubles, and provenance tests.
+- [x] Define developer-maintained metadata for the base ranker.
+- [x] Record its algorithm name, semantic version, and canonical configuration.
+- [x] Expose resolved embedding provenance through the text-embedding interface.
+- [x] Store resolved pooling, normalization, maximum length, and text policy.
+- [x] Add a typed impression selection source.
+- [x] Update embedding implementations, test doubles, and provenance tests.
+
+Status: Implemented in PR #40.
 
 Ranker versions are maintained by developers rather than configured by users.
 They change when scoring semantics or score-affecting implementation behavior
 changes.
+
+#### PR 2A: Pin Hugging Face Model Revisions
+
+Suggested branch: `feat/pin-embedding-revisions`
+
+- Add validated Hugging Face model-revision configuration.
+- Load the tokenizer and model from the same immutable artifact revision.
+- Record artifact revision separately from embedding implementation behavior.
+- Include both identities in embedding cache namespaces.
+- Add configuration, loading, provenance, and documentation tests.
+
+This follow-up must land before PR 3 persists CLI recommendation runs so
+historical model-version records cannot conflate different upstream weights.
 
 #### PR 3: Persist CLI Recommendation Runs
 

@@ -7,7 +7,6 @@ from arxiv_recommender.persistence.models import (
     ModelKind,
     ModelVersionSpec,
     RecommendationRunRecord,
-    SelectionSource,
     StoredImpression,
     StoredRecommendationRun,
 )
@@ -15,6 +14,7 @@ from arxiv_recommender.persistence.repository import (
     RecommendationPersistenceError,
     RecommendationRepository,
 )
+from arxiv_recommender.provenance import SelectionSource
 
 __all__ = [
     "DisplayedRecommendation",

@@ -41,4 +41,6 @@ class RecommendationPipeline:
             metrics_summary=summary,
             favorite_papers_count=len(favorite_papers),
             candidate_papers_count=len(daily_papers),
+            embedding_provenance=self._vectorizer.provenance,
+            ranker_provenance=recommender.provenance,
         )

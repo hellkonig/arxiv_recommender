@@ -3,13 +3,27 @@ from typing import Any
 
 import numpy as np
 
+from arxiv_recommender.provenance import ModelProvenance
+from arxiv_recommender.text_vectorization.text_policy import PaperTextPolicy
+
 
 class TextEmbedder(ABC):
     """Abstract base class for text embedding models.
 
     All text vectorization implementations should inherit from this class
-    and implement the ``process`` and ``get_cache_stats`` methods.
+    and implement the provenance, text-policy, processing, and cache-statistics
+    contracts.
     """
+
+    @property
+    @abstractmethod
+    def provenance(self) -> ModelProvenance:
+        """Return the resolved model identity and embedding configuration."""
+
+    @property
+    @abstractmethod
+    def text_policy(self) -> PaperTextPolicy:
+        """Return the policy used to construct paper embedding inputs."""
 
     @abstractmethod
     def process(self, text: str) -> np.ndarray:

@@ -1,9 +1,10 @@
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
+from arxiv_recommender.provenance import ModelProvenance
 from arxiv_recommender.text_vectorization.config import (
     AutoSetting,
     NormalizeEmbeddingsSetting,
@@ -13,10 +14,18 @@ from arxiv_recommender.text_vectorization.config import (
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
 from arxiv_recommender.text_vectorization.pooling import create_pooler
+from arxiv_recommender.text_vectorization.text_policy import (
+    PaperTextPolicy,
+    TitleAbstractTextPolicy,
+)
 
 
 class HuggingFaceEmbedding(TextEmbedder):
     """Generic HuggingFace text embedder with model-aware embedding settings."""
+
+    # Developer-maintained version of this embedding implementation's behavior,
+    # distinct from the upstream Hugging Face model artifact revision.
+    IMPLEMENTATION_VERSION: ClassVar[str] = "1.0.0"
 
     def __init__(
         self,
@@ -25,6 +34,7 @@ class HuggingFaceEmbedding(TextEmbedder):
         pooling_strategy: PoolingStrategy | str = PoolingStrategy.AUTO,
         normalize_embeddings: NormalizeEmbeddingsSetting | str = AutoSetting.AUTO,
         max_length: int = 512,
+        text_policy: PaperTextPolicy | None = None,
     ) -> None:
         """Initializes tokenizer, model, and embedding cache.
 
@@ -34,6 +44,8 @@ class HuggingFaceEmbedding(TextEmbedder):
             pooling_strategy: Token pooling strategy, or auto for known model profiles.
             normalize_embeddings: Whether to L2-normalize embeddings, or auto for known profiles.
             max_length: Maximum token length for truncation.
+            text_policy: Policy used to construct text from paper metadata. Defaults
+                to ``TitleAbstractTextPolicy(separator=" ")`` when omitted.
         """
         self.model_name = model_name
         self.embedding_config = resolve_embedding_config(
@@ -48,8 +60,32 @@ class HuggingFaceEmbedding(TextEmbedder):
         self.model = AutoModel.from_pretrained(model_name)
         self.model.eval()
         self.max_length = max_length
+        self._text_policy = text_policy if text_policy is not None else TitleAbstractTextPolicy()
         self.embedding_config_id = self.embedding_config.cache_namespace(model_name, max_length)
         self.cache = EmbeddingCache(max_size=cache_size, namespace=self.embedding_config_id)
+
+    @property
+    def text_policy(self) -> PaperTextPolicy:
+        """Return the policy paired with this embedding configuration."""
+        return self._text_policy
+
+    @property
+    def provenance(self) -> ModelProvenance:
+        """Return the resolved embedding model contract used for inference."""
+        return ModelProvenance(
+            name=self.model_name,
+            version=self.IMPLEMENTATION_VERSION,
+            config={
+                "pooling_strategy": self.embedding_config.pooling_strategy.value,
+                "normalize_embeddings": self.embedding_config.normalize_embeddings,
+                "max_length": self.max_length,
+                "text_policy": {
+                    "name": self.text_policy.name,
+                    "version": self.text_policy.version,
+                    "config": self.text_policy.config,
+                },
+            },
+        )
 
     def process(self, text: str) -> np.ndarray:
         """Generate an embedding vector for the given text.
