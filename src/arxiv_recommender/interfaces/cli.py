@@ -60,6 +60,7 @@ def main() -> None:
         model_name=config.vectorizer.model_name,
         cache_size=config.vectorizer.cache_size,
         vectorizer_options={
+            "model_revision": config.vectorizer.model_revision,
             "pooling_strategy": config.vectorizer.pooling_strategy,
             "normalize_embeddings": config.vectorizer.normalize_embeddings,
             "max_length": config.vectorizer.max_length,

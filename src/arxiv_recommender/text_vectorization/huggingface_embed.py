@@ -10,6 +10,7 @@ from arxiv_recommender.text_vectorization.config import (
     NormalizeEmbeddingsSetting,
     PoolingStrategy,
     resolve_embedding_config,
+    validate_model_revision,
 )
 from arxiv_recommender.text_vectorization.base import TextEmbedder
 from arxiv_recommender.text_vectorization.cache import EmbeddingCache
@@ -23,6 +24,7 @@ from arxiv_recommender.text_vectorization.text_policy import (
 class HuggingFaceEmbedding(TextEmbedder):
     """Generic HuggingFace text embedder with model-aware embedding settings."""
 
+    IMPLEMENTATION_NAME: ClassVar[str] = "huggingface_embedding"
     # Developer-maintained version of this embedding implementation's behavior,
     # distinct from the upstream Hugging Face model artifact revision.
     IMPLEMENTATION_VERSION: ClassVar[str] = "1.0.0"
@@ -35,6 +37,8 @@ class HuggingFaceEmbedding(TextEmbedder):
         normalize_embeddings: NormalizeEmbeddingsSetting | str = AutoSetting.AUTO,
         max_length: int = 512,
         text_policy: PaperTextPolicy | None = None,
+        *,
+        model_revision: str,
     ) -> None:
         """Initializes tokenizer, model, and embedding cache.
 
@@ -46,8 +50,14 @@ class HuggingFaceEmbedding(TextEmbedder):
             max_length: Maximum token length for truncation.
             text_policy: Policy used to construct text from paper metadata. Defaults
                 to ``TitleAbstractTextPolicy(separator=" ")`` when omitted.
+            model_revision: Full 40-character lowercase commit SHA for the model
+                artifact. The same revision is used for tokenizer and model loading.
+
+        Raises:
+            ValueError: If ``model_revision`` is not a full lowercase commit SHA.
         """
         self.model_name = model_name
+        self.model_revision = validate_model_revision(model_revision)
         self.embedding_config = resolve_embedding_config(
             model_name=model_name,
             pooling_strategy=pooling_strategy,
@@ -56,12 +66,24 @@ class HuggingFaceEmbedding(TextEmbedder):
         self.pooling_strategy = self.embedding_config.pooling_strategy.value
         self.normalize_embeddings = self.embedding_config.normalize_embeddings
         self._pooler = create_pooler(self.embedding_config.pooling_strategy)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            revision=self.model_revision,
+        )
+        self.model = AutoModel.from_pretrained(
+            model_name,
+            revision=self.model_revision,
+        )
         self.model.eval()
         self.max_length = max_length
         self._text_policy = text_policy if text_policy is not None else TitleAbstractTextPolicy()
-        self.embedding_config_id = self.embedding_config.cache_namespace(model_name, max_length)
+        self.embedding_config_id = self.embedding_config.cache_namespace(
+            model_name=model_name,
+            model_revision=self.model_revision,
+            implementation_name=self.IMPLEMENTATION_NAME,
+            implementation_version=self.IMPLEMENTATION_VERSION,
+            max_length=max_length,
+        )
         self.cache = EmbeddingCache(max_size=cache_size, namespace=self.embedding_config_id)
 
     @property
@@ -74,8 +96,12 @@ class HuggingFaceEmbedding(TextEmbedder):
         """Return the resolved embedding model contract used for inference."""
         return ModelProvenance(
             name=self.model_name,
-            version=self.IMPLEMENTATION_VERSION,
+            version=self.model_revision,
             config={
+                "implementation": {
+                    "name": self.IMPLEMENTATION_NAME,
+                    "version": self.IMPLEMENTATION_VERSION,
+                },
                 "pooling_strategy": self.embedding_config.pooling_strategy.value,
                 "normalize_embeddings": self.embedding_config.normalize_embeddings,
                 "max_length": self.max_length,

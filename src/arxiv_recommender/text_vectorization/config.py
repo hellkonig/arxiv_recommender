@@ -1,5 +1,16 @@
+import re
 from dataclasses import dataclass
 from enum import Enum
+
+
+FULL_COMMIT_SHA_PATTERN = r"^[0-9a-f]{40}$"
+
+
+def validate_model_revision(model_revision: str) -> str:
+    """Validate and return a canonical immutable model artifact revision."""
+    if re.fullmatch(FULL_COMMIT_SHA_PATTERN, model_revision) is None:
+        raise ValueError("model_revision must be a full 40-character lowercase commit SHA.")
+    return model_revision
 
 
 class PoolingStrategy(str, Enum):
@@ -34,10 +45,19 @@ class ResolvedEmbeddingConfig:
     pooling_strategy: PoolingStrategy
     normalize_embeddings: bool
 
-    def cache_namespace(self, model_name: str, max_length: int) -> str:
+    def cache_namespace(
+        self,
+        model_name: str,
+        model_revision: str,
+        implementation_name: str,
+        implementation_version: str,
+        max_length: int,
+    ) -> str:
         """Return a stable cache namespace for this embedding configuration."""
         return (
-            f"model={model_name}|pooling={self.pooling_strategy.value}|"
+            f"model={model_name}|revision={model_revision}|"
+            f"implementation={implementation_name}@{implementation_version}|"
+            f"pooling={self.pooling_strategy.value}|"
             f"normalize={self.normalize_embeddings}|max_length={max_length}"
         )
 

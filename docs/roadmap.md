@@ -62,14 +62,16 @@ changes.
 
 Suggested branch: `feat/pin-embedding-revisions`
 
-- Add validated Hugging Face model-revision configuration.
-- Load the tokenizer and model from the same immutable artifact revision.
-- Record artifact revision separately from embedding implementation behavior.
-- Include both identities in embedding cache namespaces.
-- Add configuration, loading, provenance, and documentation tests.
+- [x] Add validated Hugging Face model-revision configuration.
+- [x] Load the tokenizer and model from the same immutable artifact revision.
+- [x] Record artifact revision separately from embedding implementation behavior.
+- [x] Include both identities in embedding cache namespaces.
+- [x] Add configuration, loading, provenance, and documentation tests.
 
 This follow-up must land before PR 3 persists CLI recommendation runs so
 historical model-version records cannot conflate different upstream weights.
+
+Status: Implemented on `feat/pin-embedding-revisions`.
 
 #### PR 3: Persist CLI Recommendation Runs
 

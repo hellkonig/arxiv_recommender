@@ -1,5 +1,9 @@
 import pytest
+from pydantic import ValidationError
+
 from arxiv_recommender.schemas.config import AppConfig, VectorizerConfig
+
+MODEL_REVISION = "a" * 40
 
 
 class TestVectorizerConfig:
@@ -11,6 +15,7 @@ class TestVectorizerConfig:
             module_name="distil_bert",
             class_name="DistilBERTEmbedding",
             model_name="distilbert-base-uncased",
+            model_revision=MODEL_REVISION,
         )
         assert config.module_name == "distil_bert"
         assert config.class_name == "DistilBERTEmbedding"
@@ -22,28 +27,36 @@ class TestVectorizerConfig:
     def test_vectorizer_is_frozen(self) -> None:
         """Test that VectorizerConfig is immutable."""
         config = VectorizerConfig(
-            module_name="test", class_name="TestClass", model_name="test-model"
+            module_name="test",
+            class_name="TestClass",
+            model_name="test-model",
+            model_revision=MODEL_REVISION,
         )
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             config.module_name = "new_module"
 
     def test_vectorizer_serialization(self) -> None:
         """Test VectorizerConfig can be serialized to dict."""
         config = VectorizerConfig(
-            module_name="test", class_name="TestClass", model_name="test-model"
+            module_name="test",
+            class_name="TestClass",
+            model_name="test-model",
+            model_revision=MODEL_REVISION,
         )
         data = config.model_dump()
         assert data["module_name"] == "test"
         assert data["class_name"] == "TestClass"
         assert data["model_name"] == "test-model"
+        assert data["model_revision"] == MODEL_REVISION
 
     def test_vectorizer_rejects_negative_cache_size(self) -> None:
         """Test that cache_size cannot be negative."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             VectorizerConfig(
                 module_name="test",
                 class_name="TestClass",
                 model_name="test-model",
+                model_revision=MODEL_REVISION,
                 cache_size=-1,
             )
 
@@ -53,19 +66,23 @@ class TestVectorizerConfig:
             module_name="test",
             class_name="TestClass",
             model_name="test-model",
+            model_revision=MODEL_REVISION,
             cache_size=0,
         )
         assert config.cache_size == 0
 
     def test_vectorizer_accepts_embedding_options(self) -> None:
         """Test configurable embedding pooling and normalization options."""
-        config = VectorizerConfig(
-            module_name="huggingface_embed",
-            class_name="HuggingFaceEmbedding",
-            model_name="BAAI/bge-small-en-v1.5",
-            pooling_strategy="cls",
-            normalize_embeddings=True,
-            max_length=256,
+        config = VectorizerConfig.model_validate(
+            {
+                "module_name": "huggingface_embed",
+                "class_name": "HuggingFaceEmbedding",
+                "model_name": "BAAI/bge-small-en-v1.5",
+                "model_revision": "a" * 40,
+                "pooling_strategy": "cls",
+                "normalize_embeddings": True,
+                "max_length": 256,
+            }
         )
 
         assert config.pooling_strategy == "cls"
@@ -80,18 +97,42 @@ class TestVectorizerConfig:
                     "module_name": "test",
                     "class_name": "TestClass",
                     "model_name": "test-model",
+                    "model_revision": MODEL_REVISION,
                     "pooling_strategy": "max",
                 }
             )
 
     def test_vectorizer_rejects_non_positive_max_length(self) -> None:
         """Test that max_length must be positive."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             VectorizerConfig(
                 module_name="test",
                 class_name="TestClass",
                 model_name="test-model",
+                model_revision=MODEL_REVISION,
                 max_length=0,
+            )
+
+    @pytest.mark.parametrize("model_revision", ["", "main", "A" * 40, "a" * 39])
+    def test_vectorizer_rejects_noncanonical_model_revision(self, model_revision: str) -> None:
+        """Test that artifact revisions are immutable, canonical commit SHAs."""
+        with pytest.raises(ValidationError):
+            VectorizerConfig(
+                module_name="test",
+                class_name="TestClass",
+                model_name="test-model",
+                model_revision=model_revision,
+            )
+
+    def test_vectorizer_requires_model_revision(self) -> None:
+        """Test that model artifact identity cannot be omitted."""
+        with pytest.raises(ValidationError):
+            VectorizerConfig.model_validate(
+                {
+                    "module_name": "test",
+                    "class_name": "TestClass",
+                    "model_name": "test-model",
+                }
             )
 
 
@@ -106,6 +147,7 @@ class TestAppConfig:
                 module_name="distil_bert",
                 class_name="DistilBERTEmbedding",
                 model_name="distilbert-base-uncased",
+                model_revision=MODEL_REVISION,
             ),
             top_k=10,
         )
@@ -118,7 +160,10 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test", class_name="TestClass", model_name="test"
+                module_name="test",
+                class_name="TestClass",
+                model_name="test",
+                model_revision=MODEL_REVISION,
             ),
         )
         assert config.top_k == 10
@@ -128,7 +173,10 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test", class_name="TestClass", model_name="test"
+                module_name="test",
+                class_name="TestClass",
+                model_name="test",
+                model_revision=MODEL_REVISION,
             ),
             top_k=5,
         )
@@ -139,7 +187,10 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test", class_name="TestClass", model_name="test"
+                module_name="test",
+                class_name="TestClass",
+                model_name="test",
+                model_revision=MODEL_REVISION,
             ),
         )
         with pytest.raises(Exception):
@@ -150,7 +201,10 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test", class_name="TestClass", model_name="test"
+                module_name="test",
+                class_name="TestClass",
+                model_name="test",
+                model_revision=MODEL_REVISION,
             ),
             top_k=5,
         )
@@ -167,6 +221,7 @@ class TestAppConfig:
                 "module_name": "bert",
                 "class_name": "BERTEmbedding",
                 "model_name": "bert-base",
+                "model_revision": MODEL_REVISION,
             },
             "top_k": 20,
         }
@@ -187,7 +242,10 @@ class TestAppConfig:
             AppConfig(
                 favorite_papers_path="favorites.json",
                 vectorizer=VectorizerConfig(
-                    module_name="test", class_name="TestClass", model_name="test"
+                    module_name="test",
+                    class_name="TestClass",
+                    model_name="test",
+                    model_revision=MODEL_REVISION,
                 ),
                 top_k=top_k,
             )
@@ -198,7 +256,10 @@ class TestAppConfig:
             AppConfig(
                 favorite_papers_path="favorites.json",
                 vectorizer=VectorizerConfig(
-                    module_name="test", class_name="TestClass", model_name="test"
+                    module_name="test",
+                    class_name="TestClass",
+                    model_name="test",
+                    model_revision=MODEL_REVISION,
                 ),
                 log_level="LOUD",
             )
@@ -208,7 +269,10 @@ class TestAppConfig:
         config = AppConfig(
             favorite_papers_path="favorites.json",
             vectorizer=VectorizerConfig(
-                module_name="test", class_name="TestClass", model_name="test"
+                module_name="test",
+                class_name="TestClass",
+                model_name="test",
+                model_revision=MODEL_REVISION,
             ),
             log_level="debug",
         )

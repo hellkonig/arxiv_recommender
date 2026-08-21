@@ -17,6 +17,7 @@ class TestCli(unittest.TestCase):
                 module_name="huggingface_embed",
                 class_name="HuggingFaceEmbedding",
                 model_name="distilbert-base-uncased",
+                model_revision="a" * 40,
                 cache_size=1000,
             ),
             top_k=2,
@@ -91,6 +92,7 @@ class TestCli(unittest.TestCase):
             model_name=self.config.vectorizer.model_name,
             cache_size=self.config.vectorizer.cache_size,
             vectorizer_options={
+                "model_revision": self.config.vectorizer.model_revision,
                 "pooling_strategy": self.config.vectorizer.pooling_strategy,
                 "normalize_embeddings": self.config.vectorizer.normalize_embeddings,
                 "max_length": self.config.vectorizer.max_length,

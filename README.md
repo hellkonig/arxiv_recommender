@@ -53,6 +53,7 @@ Edit `configs/config.json`:
         "module_name": "huggingface_embed",
         "class_name": "HuggingFaceEmbedding",
         "model_name": "BAAI/bge-small-en-v1.5",
+        "model_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
         "cache_size": 1000,
         "pooling_strategy": "auto",
         "normalize_embeddings": "auto",
@@ -69,6 +70,7 @@ Edit `configs/config.json`:
 | `vectorizer.module_name` | Module name for vectorizer |
 | `vectorizer.class_name` | Class name for vectorizer |
 | `vectorizer.model_name` | Model name or local path |
+| `vectorizer.model_revision` | Immutable model artifact revision; `HuggingFaceEmbedding` requires a full lowercase commit SHA |
 | `vectorizer.cache_size` | Maximum number of embeddings to cache |
 | `vectorizer.pooling_strategy` | Embedding pooling strategy (`auto`, `mean`, or `cls`) |
 | `vectorizer.normalize_embeddings` | Whether to L2-normalize embeddings (`auto`, `true`, or `false`) |
@@ -86,10 +88,15 @@ Edit `configs/config.json`:
 ```json
 {
     "vectorizer": {
-        "model_name": "./models/my-model"
+        "model_name": "./models/my-model",
+        "model_revision": "0123456789abcdef0123456789abcdef01234567"
     }
 }
 ```
+
+For a local model, use the full commit SHA of the source or model-registry
+revision that produced the directory. The revision is recorded as provenance;
+the application does not modify local model contents.
 
 ### Model Cache Location
 

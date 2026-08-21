@@ -65,6 +65,15 @@ def test_cache_namespace_uses_resolved_embedding_values() -> None:
     config = resolve_embedding_config("BAAI/bge-small-en-v1.5")
 
     assert (
-        config.cache_namespace("BAAI/bge-small-en-v1.5", max_length=512)
-        == "model=BAAI/bge-small-en-v1.5|pooling=cls|normalize=True|max_length=512"
+        config.cache_namespace(
+            model_name="BAAI/bge-small-en-v1.5",
+            model_revision="a" * 40,
+            implementation_name="huggingface_embedding",
+            implementation_version="1.0.0",
+            max_length=512,
+        )
+        == "model=BAAI/bge-small-en-v1.5|"
+        "revision=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|"
+        "implementation=huggingface_embedding@1.0.0|"
+        "pooling=cls|normalize=True|max_length=512"
     )

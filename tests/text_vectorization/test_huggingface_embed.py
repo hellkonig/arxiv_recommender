@@ -8,6 +8,9 @@ import torch
 from arxiv_recommender.text_vectorization.huggingface_embed import HuggingFaceEmbedding
 from arxiv_recommender.text_vectorization.text_policy import TitleAbstractTextPolicy
 
+MODEL_REVISION = "a" * 40
+OTHER_MODEL_REVISION = "b" * 40
+
 
 class TestHuggingFaceEmbedding(unittest.TestCase):
     @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
@@ -28,13 +31,15 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_model.return_value = mock_output
         mock_model_from_pretrained.return_value = mock_model
 
-        embedder = HuggingFaceEmbedding("test-model")
+        embedder = HuggingFaceEmbedding("test-model", model_revision=MODEL_REVISION)
         embedding = embedder.process("sample text")
 
         self.assertIsInstance(embedding, np.ndarray)
         np.testing.assert_array_equal(embedding, np.array([2.0, 4.0], dtype=np.float32))
-        mock_tokenizer_from_pretrained.assert_called_once_with("test-model")
-        mock_model_from_pretrained.assert_called_once_with("test-model")
+        mock_tokenizer_from_pretrained.assert_called_once_with(
+            "test-model", revision=MODEL_REVISION
+        )
+        mock_model_from_pretrained.assert_called_once_with("test-model", revision=MODEL_REVISION)
         mock_model.eval.assert_called_once()
 
     @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
@@ -55,7 +60,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_model.return_value = mock_output
         mock_model_from_pretrained.return_value = mock_model
 
-        embedder = HuggingFaceEmbedding("test-model")
+        embedder = HuggingFaceEmbedding("test-model", model_revision=MODEL_REVISION)
         first_embedding = embedder.process("same text")
         second_embedding = embedder.process("same text")
 
@@ -71,7 +76,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_tokenizer_from_pretrained.return_value = MagicMock()
         mock_model_from_pretrained.return_value = MagicMock()
 
-        embedder = HuggingFaceEmbedding("test-model")
+        embedder = HuggingFaceEmbedding("test-model", model_revision=MODEL_REVISION)
 
         self.assertEqual(embedder.pooling_strategy, "mean")
         self.assertFalse(embedder.normalize_embeddings)
@@ -84,7 +89,10 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_tokenizer_from_pretrained.return_value = MagicMock()
         mock_model_from_pretrained.return_value = MagicMock()
 
-        embedder = HuggingFaceEmbedding("BAAI/bge-small-en-v1.5")
+        embedder = HuggingFaceEmbedding(
+            "BAAI/bge-small-en-v1.5",
+            model_revision=MODEL_REVISION,
+        )
 
         self.assertEqual(embedder.pooling_strategy, "cls")
         self.assertTrue(embedder.normalize_embeddings)
@@ -104,14 +112,19 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
             pooling_strategy="auto",
             normalize_embeddings="auto",
             max_length=256,
+            model_revision=MODEL_REVISION,
         )
 
         self.assertEqual(
             embedder.provenance.model_dump(),
             {
                 "name": "BAAI/bge-small-en-v1.5",
-                "version": "1.0.0",
+                "version": MODEL_REVISION,
                 "config": {
+                    "implementation": {
+                        "name": "huggingface_embedding",
+                        "version": "1.0.0",
+                    },
                     "pooling_strategy": "cls",
                     "normalize_embeddings": True,
                     "max_length": 256,
@@ -133,7 +146,11 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_model_from_pretrained.return_value = MagicMock()
         policy = TitleAbstractTextPolicy(separator="\n")
 
-        embedder = HuggingFaceEmbedding("test-model", text_policy=policy)
+        embedder = HuggingFaceEmbedding(
+            "test-model",
+            text_policy=policy,
+            model_revision=MODEL_REVISION,
+        )
 
         self.assertIs(embedder.text_policy, policy)
         self.assertEqual(
@@ -154,6 +171,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
                 "BAAI/bge-small-en-v1.5",
                 pooling_strategy="mean",
                 normalize_embeddings=True,
+                model_revision=MODEL_REVISION,
             )
 
     def test_bge_small_rejects_incorrect_explicit_normalization(self) -> None:
@@ -165,7 +183,20 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
                 "BAAI/bge-small-en-v1.5",
                 pooling_strategy="cls",
                 normalize_embeddings=False,
+                model_revision=MODEL_REVISION,
             )
+
+    def test_rejects_moving_or_noncanonical_model_revision(self) -> None:
+        for invalid_revision in ("main", "v1.0", "A" * 40, "a" * 39):
+            with self.subTest(model_revision=invalid_revision):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "full 40-character lowercase commit SHA",
+                ):
+                    HuggingFaceEmbedding(
+                        "test-model",
+                        model_revision=invalid_revision,
+                    )
 
     @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
     @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoTokenizer.from_pretrained")
@@ -189,6 +220,7 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
             "test-model",
             pooling_strategy="cls",
             normalize_embeddings=True,
+            model_revision=MODEL_REVISION,
         )
         embedding = embedder.process("sample text")
 
@@ -203,13 +235,43 @@ class TestHuggingFaceEmbedding(unittest.TestCase):
         mock_tokenizer_from_pretrained.return_value = MagicMock()
         mock_model_from_pretrained.return_value = MagicMock()
 
-        mean_embedder = HuggingFaceEmbedding("test-model", pooling_strategy="mean")
-        cls_embedder = HuggingFaceEmbedding("test-model", pooling_strategy="cls")
+        mean_embedder = HuggingFaceEmbedding(
+            "test-model",
+            pooling_strategy="mean",
+            model_revision=MODEL_REVISION,
+        )
+        cls_embedder = HuggingFaceEmbedding(
+            "test-model",
+            pooling_strategy="cls",
+            model_revision=MODEL_REVISION,
+        )
 
         self.assertNotEqual(mean_embedder.embedding_config_id, cls_embedder.embedding_config_id)
         self.assertNotEqual(
             mean_embedder.cache._compute_key("same text"),
             cls_embedder.cache._compute_key("same text"),
+        )
+
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoModel.from_pretrained")
+    @patch("arxiv_recommender.text_vectorization.huggingface_embed.AutoTokenizer.from_pretrained")
+    def test_model_revision_versions_cache_namespace(
+        self, mock_tokenizer_from_pretrained: Any, mock_model_from_pretrained: Any
+    ) -> None:
+        mock_tokenizer_from_pretrained.return_value = MagicMock()
+        mock_model_from_pretrained.return_value = MagicMock()
+
+        first_embedder = HuggingFaceEmbedding(
+            "test-model",
+            model_revision=MODEL_REVISION,
+        )
+        second_embedder = HuggingFaceEmbedding(
+            "test-model",
+            model_revision=OTHER_MODEL_REVISION,
+        )
+
+        self.assertNotEqual(
+            first_embedder.cache._compute_key("same text"),
+            second_embedder.cache._compute_key("same text"),
         )
 
 

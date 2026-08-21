@@ -58,6 +58,7 @@ def instantiate_vectorizer(config: AppConfig) -> TextEmbedder:
         model_name=config.vectorizer.model_name,
         cache_size=0,
         vectorizer_options={
+            "model_revision": config.vectorizer.model_revision,
             "pooling_strategy": config.vectorizer.pooling_strategy,
             "normalize_embeddings": config.vectorizer.normalize_embeddings,
             "max_length": config.vectorizer.max_length,
@@ -155,6 +156,7 @@ def model_metadata(config: AppConfig) -> dict[str, Any]:
         "module_name": config.vectorizer.module_name,
         "class_name": config.vectorizer.class_name,
         "model_name": config.vectorizer.model_name,
+        "model_revision": config.vectorizer.model_revision,
         "pooling_strategy": config.vectorizer.pooling_strategy.value,
         "normalize_embeddings": normalize_embeddings,
         "max_length": config.vectorizer.max_length,

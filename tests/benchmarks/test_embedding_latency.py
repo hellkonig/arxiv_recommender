@@ -57,6 +57,7 @@ def make_config() -> AppConfig:
             module_name="huggingface_embed",
             class_name="HuggingFaceEmbedding",
             model_name="BAAI/bge-small-en-v1.5",
+            model_revision="a" * 40,
             cache_size=1000,
             pooling_strategy=PoolingStrategy.AUTO,
             normalize_embeddings=AutoSetting.AUTO,
@@ -103,6 +104,7 @@ def test_benchmark_embeddings_returns_json_serializable_report() -> None:
 
     assert report["benchmark"] == "embedding_latency"
     assert report["model"]["model_name"] == "BAAI/bge-small-en-v1.5"
+    assert report["model"]["model_revision"] == "a" * 40
     assert report["model"]["cache_size"] == 0
     assert report["model_load_seconds"] == 1.0
     assert report["warmup_seconds"] == 1.0
