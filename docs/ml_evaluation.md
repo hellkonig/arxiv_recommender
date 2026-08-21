@@ -72,7 +72,7 @@ Evaluate these methods when sufficient feedback is available:
 
 Every comparison must use the same eligible candidate sets and labels. Record:
 
-- model and code version
+- immutable model artifact revision and code version
 - text construction and preprocessing
 - pooling and normalization
 - ranking configuration

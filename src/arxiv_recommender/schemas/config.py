@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from arxiv_recommender.text_vectorization.config import (
     AutoSetting,
+    FULL_COMMIT_SHA_PATTERN,
     NormalizeEmbeddingsSetting,
     PoolingStrategy,
 )
@@ -12,6 +13,10 @@ class VectorizerConfig(BaseModel):
     module_name: str = Field(description="Module name for the vectorizer")
     class_name: str = Field(description="Class name for the vectorizer")
     model_name: str = Field(description="Path or name of the model")
+    model_revision: str = Field(
+        pattern=FULL_COMMIT_SHA_PATTERN,
+        description="Full 40-character lowercase model artifact commit SHA",
+    )
     cache_size: int = Field(
         default=1000,
         ge=0,

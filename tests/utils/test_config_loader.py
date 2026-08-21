@@ -30,6 +30,7 @@ class TestConfigLoader(unittest.TestCase):
                     "module_name": "huggingface_embed",
                     "class_name": "HuggingFaceEmbedding",
                     "model_name": "distilbert-base-uncased",
+                    "model_revision": "a" * 40,
                     "cache_size": 1000,
                 },
                 "top_k": 5,

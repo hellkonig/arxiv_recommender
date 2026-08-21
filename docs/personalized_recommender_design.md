@@ -65,9 +65,11 @@ final ranking and controlled exploration
 local web interface
 ```
 
-`BAAI/bge-small-en-v1.5` is the initial embedding model. Paper input consists
+`BAAI/bge-small-en-v1.5` is the initial embedding model. Its tokenizer and
+weights are loaded from the same configured commit SHA. Paper input consists
 of the title and abstract. Embeddings are L2-normalized and cached with an
-identifier that includes the model and embedding configuration.
+identifier that includes the artifact revision, embedding implementation, and
+resolved embedding configuration.
 
 Embedding configuration is resolved before inference. User-facing config may
 use `auto` for pooling and normalization, but runtime embedding metadata uses
