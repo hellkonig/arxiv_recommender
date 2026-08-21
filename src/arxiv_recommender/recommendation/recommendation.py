@@ -21,8 +21,9 @@ class Recommender:
         metrics: Optional metrics collector for observability.
     """
 
-    # These identifiers describe the scoring behavior implemented by this
-    # class. Bump the version whenever that behavior changes.
+    # This metadata describes the scoring behavior implemented by this class;
+    # it is not user configuration. Change it only with the corresponding
+    # implementation, and bump the version whenever scoring behavior changes.
     RANKER_NAME: ClassVar[str] = "max_favorite_cosine_similarity"
     RANKER_VERSION: ClassVar[str] = "1.0.0"
     RANKER_CONFIG: ClassVar[dict[str, JsonValue]] = {

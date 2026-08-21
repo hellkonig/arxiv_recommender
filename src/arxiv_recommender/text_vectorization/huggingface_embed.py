@@ -23,9 +23,9 @@ from arxiv_recommender.text_vectorization.text_policy import (
 class HuggingFaceEmbedding(TextEmbedder):
     """Generic HuggingFace text embedder with model-aware embedding settings."""
 
-    # Developer-maintained behavior version. Bump when unconfigured embedding
-    # semantics change; resolved settings remain separately recorded in config.
-    CONTRACT_VERSION: ClassVar[str] = "1.0.0"
+    # Developer-maintained version of this embedding implementation's behavior,
+    # distinct from the upstream Hugging Face model artifact revision.
+    IMPLEMENTATION_VERSION: ClassVar[str] = "1.0.0"
 
     def __init__(
         self,
@@ -44,7 +44,8 @@ class HuggingFaceEmbedding(TextEmbedder):
             pooling_strategy: Token pooling strategy, or auto for known model profiles.
             normalize_embeddings: Whether to L2-normalize embeddings, or auto for known profiles.
             max_length: Maximum token length for truncation.
-            text_policy: Policy used to construct text from paper metadata.
+            text_policy: Policy used to construct text from paper metadata. Defaults
+                to ``TitleAbstractTextPolicy(separator=" ")`` when omitted.
         """
         self.model_name = model_name
         self.embedding_config = resolve_embedding_config(
@@ -73,7 +74,7 @@ class HuggingFaceEmbedding(TextEmbedder):
         """Return the resolved embedding model contract used for inference."""
         return ModelProvenance(
             name=self.model_name,
-            version=self.CONTRACT_VERSION,
+            version=self.IMPLEMENTATION_VERSION,
             config={
                 "pooling_strategy": self.embedding_config.pooling_strategy.value,
                 "normalize_embeddings": self.embedding_config.normalize_embeddings,

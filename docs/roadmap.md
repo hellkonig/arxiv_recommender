@@ -58,6 +58,19 @@ Ranker versions are maintained by developers rather than configured by users.
 They change when scoring semantics or score-affecting implementation behavior
 changes.
 
+#### PR 2A: Pin Hugging Face Model Revisions
+
+Suggested branch: `feat/pin-embedding-revisions`
+
+- Add validated Hugging Face model-revision configuration.
+- Load the tokenizer and model from the same immutable artifact revision.
+- Record artifact revision separately from embedding implementation behavior.
+- Include both identities in embedding cache namespaces.
+- Add configuration, loading, provenance, and documentation tests.
+
+This follow-up must land before PR 3 persists CLI recommendation runs so
+historical model-version records cannot conflate different upstream weights.
+
 #### PR 3: Persist CLI Recommendation Runs
 
 Suggested branch: `feat/persist-cli-runs`
